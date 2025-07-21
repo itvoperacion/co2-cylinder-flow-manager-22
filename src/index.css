@@ -8,35 +8,66 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Industrial color palette optimized for CO2 management application */
+    --background: 216 16% 97%;
+    --foreground: 215 25% 27%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 25% 27%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 25% 27%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary: Industrial blue for CO2 operations */
+    --primary: 210 100% 40%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 210 100% 35%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary: Steel gray for controls */
+    --secondary: 215 16% 88%;
+    --secondary-foreground: 215 25% 27%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted: Light industrial gray */
+    --muted: 215 16% 94%;
+    --muted-foreground: 215 14% 50%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent: Safety orange for warnings */
+    --accent: 25 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Status colors for cylinder management */
+    --success: 145 63% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 100% 51%;
+    --warning-foreground: 215 25% 27%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Industrial UI elements */
+    --border: 215 16% 88%;
+    --input: 0 0% 100%;
+    --ring: 210 100% 40%;
 
-    --radius: 0.5rem;
+    /* Tank level indicator colors */
+    --tank-full: 145 63% 42%;
+    --tank-medium: 45 100% 51%;
+    --tank-low: 0 84% 60%;
+    --tank-critical: 0 100% 40%;
+
+    /* CO2 themed gradients */
+    --gradient-tank: linear-gradient(180deg, hsl(var(--tank-full)), hsl(var(--tank-medium)));
+    --gradient-industrial: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
+    --gradient-warning: linear-gradient(135deg, hsl(var(--warning)), hsl(25 100% 45%));
+
+    /* Shadows for industrial depth */
+    --shadow-industrial: 0 4px 12px hsl(215 25% 27% / 0.15);
+    --shadow-tank: 0 8px 24px hsl(210 100% 40% / 0.2);
+    --shadow-alert: 0 4px 16px hsl(var(--warning) / 0.3);
+
+    /* Animation timings */
+    --transition-industrial: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 

@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Package,
   Droplets,
+  ArrowRightLeft,
   Bell,
   RefreshCw
 } from "lucide-react";
@@ -33,6 +34,11 @@ const Navigation = ({ className, unreadAlertsCount, onRefresh, refreshing }: Nav
       to: "/fillings",
       icon: Droplets,
       label: "Llenados"
+    },
+    {
+      to: "/transfers",
+      icon: ArrowRightLeft,
+      label: "Traslados"
     }
   ];
 

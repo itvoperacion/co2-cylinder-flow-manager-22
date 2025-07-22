@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Dashboard from "./pages/Dashboard";
+import Cylinders from "./pages/Cylinders";
+import Fillings from "./pages/Fillings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +45,16 @@ const AppRoutes = () => (
     <Route path="/" element={
       <ProtectedRoute>
         <Dashboard />
+      </ProtectedRoute>
+    } />
+    <Route path="/cylinders" element={
+      <ProtectedRoute>
+        <Cylinders />
+      </ProtectedRoute>
+    } />
+    <Route path="/fillings" element={
+      <ProtectedRoute>
+        <Fillings />
       </ProtectedRoute>
     } />
     <Route path="/auth" element={

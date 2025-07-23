@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Cylinders from "./pages/Cylinders";
 import Fillings from "./pages/Fillings";
 import Transfers from "./pages/Transfers";
+import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -61,6 +62,11 @@ const AppRoutes = () => (
     <Route path="/transfers" element={
       <ProtectedRoute>
         <Transfers />
+      </ProtectedRoute>
+    } />
+    <Route path="/reports" element={
+      <ProtectedRoute>
+        <Reports />
       </ProtectedRoute>
     } />
     <Route path="/auth" element={

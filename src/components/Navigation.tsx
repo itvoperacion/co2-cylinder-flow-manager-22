@@ -6,6 +6,7 @@ import {
   Package,
   Droplets,
   ArrowRightLeft,
+  FileSpreadsheet,
   Bell,
   RefreshCw
 } from "lucide-react";
@@ -39,6 +40,11 @@ const Navigation = ({ className, unreadAlertsCount, onRefresh, refreshing }: Nav
       to: "/transfers",
       icon: ArrowRightLeft,
       label: "Traslados"
+    },
+    {
+      to: "/reports",
+      icon: FileSpreadsheet,
+      label: "Reportes"
     }
   ];
 

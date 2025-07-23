@@ -6,12 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, Loader2, Factory } from "lucide-react";
+import { Mail, Lock, Loader2, Factory, KeyRound } from "lucide-react";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("signin");
   const { toast } = useToast();
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -91,6 +93,40 @@ const Auth = () => {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+
+      if (error) {
+        toast({
+          title: "Error al enviar email",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Email enviado",
+          description: "Se ha enviado un enlace de recuperación a tu correo electrónico.",
+        });
+        setResetEmail("");
+        setActiveTab("signin");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error inesperado. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-industrial flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-industrial">
@@ -108,10 +144,11 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
               <TabsTrigger value="signup">Registrarse</TabsTrigger>
+              <TabsTrigger value="reset">Recuperar</TabsTrigger>
             </TabsList>
             
             <TabsContent value="signin">
@@ -160,6 +197,15 @@ const Auth = () => {
                     "Iniciar Sesión"
                   )}
                 </Button>
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("reset")}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
               </form>
             </TabsContent>
             
@@ -210,6 +256,57 @@ const Auth = () => {
                     "Crear Cuenta"
                   )}
                 </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="reset">
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <div className="text-center mb-4">
+                  <KeyRound className="mx-auto h-12 w-12 text-primary mb-2" />
+                  <h3 className="text-lg font-semibold">Recuperar Contraseña</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="operador@empresa.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={loading}
+                  variant="default"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando enlace...
+                    </>
+                  ) : (
+                    "Enviar Enlace de Recuperación"
+                  )}
+                </Button>
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("signin")}
+                    className="text-sm text-muted-foreground hover:text-primary"
+                  >
+                    ← Volver al inicio de sesión
+                  </button>
+                </div>
               </form>
             </TabsContent>
           </Tabs>

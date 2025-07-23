@@ -14,7 +14,206 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cylinders: {
+        Row: {
+          capacity: string
+          created_at: string
+          current_location: string
+          current_status: string
+          id: string
+          is_active: boolean
+          last_hydrostatic_test: string
+          manufacturing_date: string
+          next_test_due: string
+          observations: string | null
+          serial_number: string
+          updated_at: string
+          valve_type: string
+        }
+        Insert: {
+          capacity: string
+          created_at?: string
+          current_location?: string
+          current_status?: string
+          id?: string
+          is_active?: boolean
+          last_hydrostatic_test: string
+          manufacturing_date: string
+          next_test_due: string
+          observations?: string | null
+          serial_number: string
+          updated_at?: string
+          valve_type: string
+        }
+        Update: {
+          capacity?: string
+          created_at?: string
+          current_location?: string
+          current_status?: string
+          id?: string
+          is_active?: boolean
+          last_hydrostatic_test?: string
+          manufacturing_date?: string
+          next_test_due?: string
+          observations?: string | null
+          serial_number?: string
+          updated_at?: string
+          valve_type?: string
+        }
+        Relationships: []
+      }
+      fillings: {
+        Row: {
+          batch_number: string | null
+          created_at: string
+          cylinder_id: string
+          id: string
+          observations: string | null
+          operator_name: string
+          tank_id: string
+          updated_at: string
+          weight_filled: number
+        }
+        Insert: {
+          batch_number?: string | null
+          created_at?: string
+          cylinder_id: string
+          id?: string
+          observations?: string | null
+          operator_name: string
+          tank_id: string
+          updated_at?: string
+          weight_filled: number
+        }
+        Update: {
+          batch_number?: string | null
+          created_at?: string
+          cylinder_id?: string
+          id?: string
+          observations?: string | null
+          operator_name?: string
+          tank_id?: string
+          updated_at?: string
+          weight_filled?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fillings_cylinder_id_fkey"
+            columns: ["cylinder_id"]
+            isOneToOne: false
+            referencedRelation: "cylinders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fillings_tank_id_fkey"
+            columns: ["tank_id"]
+            isOneToOne: false
+            referencedRelation: "tanks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tanks: {
+        Row: {
+          capacity_kg: number
+          created_at: string
+          current_weight_kg: number
+          id: string
+          is_active: boolean
+          last_refill_date: string | null
+          tank_number: string
+          updated_at: string
+        }
+        Insert: {
+          capacity_kg: number
+          created_at?: string
+          current_weight_kg?: number
+          id?: string
+          is_active?: boolean
+          last_refill_date?: string | null
+          tank_number: string
+          updated_at?: string
+        }
+        Update: {
+          capacity_kg?: number
+          created_at?: string
+          current_weight_kg?: number
+          id?: string
+          is_active?: boolean
+          last_refill_date?: string | null
+          tank_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transfers: {
+        Row: {
+          created_at: string
+          cylinder_id: string
+          from_location: string
+          id: string
+          observations: string | null
+          operator_name: string
+          to_location: string
+        }
+        Insert: {
+          created_at?: string
+          cylinder_id: string
+          from_location: string
+          id?: string
+          observations?: string | null
+          operator_name: string
+          to_location: string
+        }
+        Update: {
+          created_at?: string
+          cylinder_id?: string
+          from_location?: string
+          id?: string
+          observations?: string | null
+          operator_name?: string
+          to_location?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfers_cylinder_id_fkey"
+            columns: ["cylinder_id"]
+            isOneToOne: false
+            referencedRelation: "cylinders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -14,7 +14,7 @@ import { es } from "date-fns/locale";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 
-type ReportType = "cylinders" | "cylinder_fillings" | "cylinder_transfers" | "tank_movements" | "system_alerts";
+type ReportType = "cylinders" | "fillings" | "transfers" | "tank_movements" | "system_alerts";
 
 const Reports = () => {
   const [selectedReport, setSelectedReport] = useState<ReportType>("cylinders");
@@ -28,10 +28,10 @@ const Reports = () => {
       let query;
       
       // Build query based on report type
-      if (selectedReport === 'cylinder_fillings') {
-        query = supabase.from('cylinder_fillings').select('*, cylinders(serial_number, capacity, current_status)');
-      } else if (selectedReport === 'cylinder_transfers') {
-        query = supabase.from('cylinder_transfers').select('*, cylinders(serial_number, capacity, current_status, current_location)');
+      if (selectedReport === 'fillings') {
+        query = supabase.from('fillings').select('*, cylinders(serial_number, capacity, current_status)');
+      } else if (selectedReport === 'transfers') {
+        query = supabase.from('transfers').select('*, cylinders(serial_number, capacity, current_status, current_location)');
       } else {
         query = supabase.from(selectedReport).select('*');
       }
@@ -53,8 +53,8 @@ const Reports = () => {
 
   const reportOptions = [
     { value: "cylinders", label: "Cilindros", description: "Reporte completo de cilindros" },
-    { value: "cylinder_fillings", label: "Llenados", description: "Historial de llenados de cilindros" },
-    { value: "cylinder_transfers", label: "Traslados", description: "Movimientos entre ubicaciones" },
+    { value: "fillings", label: "Llenados", description: "Historial de llenados de cilindros" },
+    { value: "transfers", label: "Traslados", description: "Movimientos entre ubicaciones" },
     { value: "tank_movements", label: "Movimientos Tanque", description: "Entradas y salidas del tanque principal" },
     { value: "system_alerts", label: "Alertas", description: "Alertas del sistema" }
   ];

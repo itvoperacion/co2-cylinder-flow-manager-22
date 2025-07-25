@@ -39,8 +39,8 @@ interface Filling {
   operator_name: string;
   batch_number: string | null;
   observations: string | null;
-  is_approved: boolean;
   created_at: string;
+  updated_at: string;
   cylinders?: Cylinder;
 }
 
@@ -70,7 +70,7 @@ const Fillings = () => {
   const fetchFillings = async () => {
     try {
       const { data, error } = await supabase
-        .from('cylinder_fillings')
+        .from('fillings')
         .select(`
           *,
           cylinders (
@@ -130,7 +130,7 @@ const Fillings = () => {
       }
 
       const { error } = await supabase
-        .from('cylinder_fillings')
+        .from('fillings')
         .insert([{
           cylinder_id: formData.cylinder_id,
           tank_id: tanks[0].id,
@@ -167,16 +167,11 @@ const Fillings = () => {
     }
   };
 
-  const getStatusBadge = (isApproved: boolean) => {
-    return isApproved ? (
+  const getStatusBadge = () => {
+    return (
       <Badge variant="default" className="flex items-center gap-1">
         <CheckCircle className="h-3 w-3" />
-        Aprobado
-      </Badge>
-    ) : (
-      <Badge variant="secondary" className="flex items-center gap-1">
-        <Clock className="h-3 w-3" />
-        Pendiente
+        Completado
       </Badge>
     );
   };
@@ -184,10 +179,7 @@ const Fillings = () => {
   const filteredFillings = fillings.filter(filling => {
     const matchesSearch = filling.cylinders?.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          filling.operator_name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || 
-                         (statusFilter === "approved" && filling.is_approved) ||
-                         (statusFilter === "pending" && !filling.is_approved);
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
   return (
@@ -307,9 +299,14 @@ const Fillings = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pendientes</p>
+                <p className="text-sm font-medium text-muted-foreground">Esta Semana</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {fillings.filter(f => !f.is_approved).length}
+                  {fillings.filter(f => {
+                    const fillingDate = new Date(f.created_at);
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    return fillingDate >= weekAgo;
+                  }).length}
                 </p>
               </div>
               <Clock className="h-8 w-8 text-orange-600" />
@@ -348,7 +345,7 @@ const Fillings = () => {
               </div>
             </div>
             <div>
-              <Label>Estado</Label>
+              <Label>Filtro de Fecha</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <Filter className="h-4 w-4 mr-2" />
@@ -356,8 +353,8 @@ const Fillings = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="approved">Aprobados</SelectItem>
-                  <SelectItem value="pending">Pendientes</SelectItem>
+                  <SelectItem value="today">Hoy</SelectItem>
+                  <SelectItem value="week">Esta Semana</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -430,7 +427,7 @@ const Fillings = () => {
                       </p>
                     </div>
                   </div>
-                  {getStatusBadge(filling.is_approved)}
+                  {getStatusBadge()}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">

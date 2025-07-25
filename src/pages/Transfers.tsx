@@ -31,7 +31,6 @@ interface Cylinder {
   capacity: string;
   current_status: string;
   current_location: string;
-  current_weight: number | null;
 }
 
 interface Transfer {
@@ -40,12 +39,7 @@ interface Transfer {
   from_location: string;
   to_location: string;
   operator_name: string;
-  driver_name: string | null;
-  customer_name: string | null;
-  delivery_note_number: string | null;
-  transfer_date: string;
   observations: string | null;
-  cylinder_quantity: number;
   created_at: string;
   cylinders?: Cylinder;
 }
@@ -106,7 +100,7 @@ const Transfers = () => {
   const fetchTransfers = async () => {
     try {
       const { data, error } = await supabase
-        .from('cylinder_transfers')
+        .from('transfers')
         .select(`
           *,
           cylinders (
@@ -114,8 +108,7 @@ const Transfers = () => {
             serial_number,
             capacity,
             current_status,
-            current_location,
-            current_weight
+            current_location
           )
         `)
         .order('created_at', { ascending: false });
@@ -218,16 +211,11 @@ const Transfers = () => {
         from_location: formData.from_location as any,
         to_location: formData.to_location as any,
         operator_name: formData.operator_name,
-        driver_name: formData.driver_name || null,
-        customer_name: formData.customer_name || null,
-        delivery_note_number: formData.delivery_note_number || null,
-        transfer_date: formData.transfer_date,
-        observations: formData.observations || null,
-        cylinder_quantity: 1
+        observations: formData.observations || null
       }));
 
       const { error } = await supabase
-        .from('cylinder_transfers')
+        .from('transfers')
         .insert(transferRecords);
 
       if (error) throw error;
@@ -273,8 +261,7 @@ const Transfers = () => {
 
   const filteredTransfers = transfers.filter(transfer => {
     const matchesSearch = transfer.cylinders?.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transfer.operator_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transfer.customer_name?.toLowerCase().includes(searchTerm.toLowerCase());
+                         transfer.operator_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLocation = locationFilter === "all" || 
                            transfer.from_location === locationFilter || 
                            transfer.to_location === locationFilter;
@@ -446,10 +433,9 @@ const Transfers = () => {
                             />
                             <Label htmlFor={cylinder.id} className="flex-1 cursor-pointer">
                               <div className="text-sm font-medium">{cylinder.serial_number}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {cylinder.capacity} • {cylinder.current_status}
-                                {cylinder.current_weight && ` • ${cylinder.current_weight}kg`}
-                              </div>
+                               <div className="text-xs text-muted-foreground">
+                                 {cylinder.capacity} • {cylinder.current_status}
+                               </div>
                             </Label>
                           </div>
                         ))}
@@ -503,33 +489,33 @@ const Transfers = () => {
             </CardContent>
           </Card>
           
-          <Card className="shadow-industrial">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Hoy</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {transfers.filter(t => new Date(t.transfer_date).toDateString() === new Date().toDateString()).length}
-                  </p>
-                </div>
-                <Calendar className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
+                 <Card className="shadow-industrial">
+                   <CardContent className="p-6">
+                     <div className="flex items-center justify-between">
+                       <div>
+                         <p className="text-sm font-medium text-muted-foreground">Hoy</p>
+                         <p className="text-2xl font-bold text-green-600">
+                           {transfers.filter(t => new Date(t.created_at).toDateString() === new Date().toDateString()).length}
+                         </p>
+                       </div>
+                       <Calendar className="h-8 w-8 text-green-600" />
+                     </div>
+                   </CardContent>
+                 </Card>
           
           <Card className="shadow-industrial">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Esta Semana</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {transfers.filter(t => {
-                      const transferDate = new Date(t.transfer_date);
-                      const weekAgo = new Date();
-                      weekAgo.setDate(weekAgo.getDate() - 7);
-                      return transferDate >= weekAgo;
-                    }).length}
-                  </p>
+                   <p className="text-2xl font-bold text-blue-600">
+                     {transfers.filter(t => {
+                       const transferDate = new Date(t.created_at);
+                       const weekAgo = new Date();
+                       weekAgo.setDate(weekAgo.getDate() - 7);
+                       return transferDate >= weekAgo;
+                     }).length}
+                   </p>
                 </div>
                 <Package className="h-8 w-8 text-blue-600" />
               </div>
@@ -656,45 +642,13 @@ const Transfers = () => {
                     
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <span className="font-medium">Fecha:</span>
-                        <br />
-                        <span>{new Date(transfer.transfer_date).toLocaleDateString()}</span>
-                      </div>
+                       <div>
+                         <span className="font-medium">Fecha:</span>
+                         <br />
+                         <span>{new Date(transfer.created_at).toLocaleDateString()}</span>
+                       </div>
                     </div>
                     
-                    {transfer.customer_name && (
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <span className="font-medium">Cliente:</span>
-                          <br />
-                          <span>{transfer.customer_name}</span>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {transfer.driver_name && (
-                      <div className="flex items-center gap-2">
-                        <Truck className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <span className="font-medium">Conductor:</span>
-                          <br />
-                          <span>{transfer.driver_name}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {transfer.delivery_note_number && (
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <span className="font-medium">Nota:</span>
-                          <br />
-                          <span>{transfer.delivery_note_number}</span>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {transfer.observations && (

@@ -32,7 +32,6 @@ interface Cylinder {
   next_test_due: string | null;
   current_location: string;
   current_status: string;
-  current_weight: number | null;
   is_active: boolean;
   observations: string | null;
   created_at: string;
@@ -407,10 +406,10 @@ const Cylinders = () => {
                     </span>
                   </div>
                   <div>
-                    <span className="font-medium">Peso Actual:</span>
+                    <span className="font-medium">Fabricación:</span>
                     <br />
                     <span className="text-muted-foreground">
-                      {cylinder.current_weight ? `${cylinder.current_weight} kg` : 'N/A'}
+                      {new Date(cylinder.manufacturing_date).toLocaleDateString()}
                     </span>
                   </div>
                 </div>

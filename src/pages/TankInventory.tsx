@@ -2,6 +2,7 @@ import { useState } from "react";
 import Layout from "@/components/Layout";
 import TankIndicator from "@/components/TankIndicator";
 import TankEntryForm from "@/components/TankEntryForm";
+import TankExitForm from "@/components/TankExitForm";
 import TankMovementsHistory from "@/components/TankMovementsHistory";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -26,13 +27,18 @@ const TankInventory = () => {
 
         {/* Pestañas para las diferentes funcionalidades */}
         <Tabs defaultValue="entry" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="entry">Registrar Entrada</TabsTrigger>
+            <TabsTrigger value="exit">Registrar Salida</TabsTrigger>
             <TabsTrigger value="history">Historial de Movimientos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="entry" className="space-y-6">
             <TankEntryForm onEntryAdded={handleEntryAdded} />
+          </TabsContent>
+
+          <TabsContent value="exit" className="space-y-6">
+            <TankExitForm onExitAdded={handleEntryAdded} />
           </TabsContent>
 
           <TabsContent value="history" className="space-y-6">

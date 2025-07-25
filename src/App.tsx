@@ -9,6 +9,7 @@ import Cylinders from "./pages/Cylinders";
 import Fillings from "./pages/Fillings";
 import Transfers from "./pages/Transfers";
 import Reports from "./pages/Reports";
+import TankInventory from "./pages/TankInventory";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -67,6 +68,11 @@ const AppRoutes = () => (
     <Route path="/reports" element={
       <ProtectedRoute>
         <Reports />
+      </ProtectedRoute>
+    } />
+    <Route path="/tank-inventory" element={
+      <ProtectedRoute>
+        <TankInventory />
       </ProtectedRoute>
     } />
     <Route path="/auth" element={

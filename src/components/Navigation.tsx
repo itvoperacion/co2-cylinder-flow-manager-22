@@ -8,7 +8,8 @@ import {
   ArrowRightLeft,
   FileSpreadsheet,
   Bell,
-  RefreshCw
+  RefreshCw,
+  Gauge
 } from "lucide-react";
 
 interface NavigationProps {
@@ -30,6 +31,11 @@ const Navigation = ({ className, unreadAlertsCount, onRefresh, refreshing }: Nav
       to: "/cylinders",
       icon: Package,
       label: "Cilindros"
+    },
+    {
+      to: "/tank-inventory",
+      icon: Gauge,
+      label: "Tanque CO2"
     },
     {
       to: "/fillings",

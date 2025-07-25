@@ -7,6 +7,7 @@ import { Fuel, TrendingDown, AlertTriangle } from "lucide-react";
 
 interface TankData {
   id: string;
+  tank_name: string;
   current_level: number;
   capacity: number;
   minimum_threshold: number;
@@ -103,10 +104,10 @@ const TankIndicator = () => {
     <Card className="shadow-tank">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Fuel className="h-5 w-5 text-primary" />
-            Tanque Principal CO2
-          </div>
+        <div className="flex items-center gap-2">
+          <Fuel className="h-5 w-5 text-primary" />
+          {tankData?.tank_name || 'Tanque Principal CO2'}
+        </div>
           <Badge variant={getStatusColor() === "destructive" ? "destructive" : 
                          getStatusColor() === "warning" ? "default" : "default"}
                  className={getStatusColor() === "success" ? "bg-success text-success-foreground" :

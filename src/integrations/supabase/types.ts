@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      co2_tank: {
+        Row: {
+          capacity: number
+          created_at: string
+          current_level: number
+          id: string
+          last_updated: string
+          minimum_threshold: number
+          tank_name: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          current_level?: number
+          id?: string
+          last_updated?: string
+          minimum_threshold?: number
+          tank_name?: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          current_level?: number
+          id?: string
+          last_updated?: string
+          minimum_threshold?: number
+          tank_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cylinders: {
         Row: {
           capacity: string
@@ -142,6 +175,93 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      system_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          severity: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          severity?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          severity?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tank_movements: {
+        Row: {
+          created_at: string
+          id: string
+          movement_type: string
+          observations: string | null
+          operator_name: string
+          quantity: number
+          reference_filling_id: string | null
+          supplier: string | null
+          tank_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          movement_type: string
+          observations?: string | null
+          operator_name: string
+          quantity: number
+          reference_filling_id?: string | null
+          supplier?: string | null
+          tank_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          movement_type?: string
+          observations?: string | null
+          operator_name?: string
+          quantity?: number
+          reference_filling_id?: string | null
+          supplier?: string | null
+          tank_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tank_movements_reference_filling_id_fkey"
+            columns: ["reference_filling_id"]
+            isOneToOne: false
+            referencedRelation: "fillings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tank_movements_tank_id_fkey"
+            columns: ["tank_id"]
+            isOneToOne: false
+            referencedRelation: "co2_tank"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tanks: {
         Row: {

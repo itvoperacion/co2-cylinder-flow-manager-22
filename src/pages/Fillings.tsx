@@ -58,7 +58,7 @@ const Fillings = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [formData, setFormData] = useState({
     selected_cylinders: [] as string[],
-    weight_filled: "",
+    cylinder_weights: {} as { [cylinderId: string]: string },
     operator_name: "",
     batch_number: "",
     observations: ""
@@ -117,18 +117,51 @@ const Fillings = () => {
   };
 
   const handleCylinderSelection = (cylinderId: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      selected_cylinders: checked 
-        ? [...prev.selected_cylinders, cylinderId]
-        : prev.selected_cylinders.filter(id => id !== cylinderId)
-    }));
+    setFormData(prev => {
+      if (checked) {
+        return {
+          ...prev,
+          selected_cylinders: [...prev.selected_cylinders, cylinderId],
+          cylinder_weights: { ...prev.cylinder_weights, [cylinderId]: "" }
+        };
+      } else {
+        const newCylinderWeights = { ...prev.cylinder_weights };
+        delete newCylinderWeights[cylinderId];
+        return {
+          ...prev,
+          selected_cylinders: prev.selected_cylinders.filter(id => id !== cylinderId),
+          cylinder_weights: newCylinderWeights
+        };
+      }
+    });
   };
 
   const handleSelectAll = (checked: boolean) => {
+    setFormData(prev => {
+      if (checked) {
+        const cylinderWeights: { [key: string]: string } = {};
+        availableCylinders.forEach(cylinder => {
+          cylinderWeights[cylinder.id] = "";
+        });
+        return {
+          ...prev,
+          selected_cylinders: availableCylinders.map(c => c.id),
+          cylinder_weights: cylinderWeights
+        };
+      } else {
+        return {
+          ...prev,
+          selected_cylinders: [],
+          cylinder_weights: {}
+        };
+      }
+    });
+  };
+
+  const handleWeightChange = (cylinderId: string, weight: string) => {
     setFormData(prev => ({
       ...prev,
-      selected_cylinders: checked ? availableCylinders.map(c => c.id) : []
+      cylinder_weights: { ...prev.cylinder_weights, [cylinderId]: weight }
     }));
   };
 
@@ -156,11 +189,25 @@ const Fillings = () => {
         throw new Error('No se encontró tanque de CO2');
       }
 
+      // Validar que todos los cilindros tengan peso
+      const missingWeights = formData.selected_cylinders.filter(
+        cylinderId => !formData.cylinder_weights[cylinderId] || formData.cylinder_weights[cylinderId].trim() === ""
+      );
+      
+      if (missingWeights.length > 0) {
+        toast({
+          title: "Error",
+          description: "Debes ingresar el peso para todos los cilindros seleccionados.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Crear registros de llenado para cada cilindro seleccionado
       const fillingRecords = formData.selected_cylinders.map(cylinderId => ({
         cylinder_id: cylinderId,
         tank_id: tanks[0].id,
-        weight_filled: parseFloat(formData.weight_filled),
+        weight_filled: parseFloat(formData.cylinder_weights[cylinderId]),
         operator_name: formData.operator_name,
         batch_number: formData.batch_number || null,
         observations: formData.observations || null
@@ -188,7 +235,7 @@ const Fillings = () => {
       setShowAddDialog(false);
       setFormData({
         selected_cylinders: [],
-        weight_filled: "",
+        cylinder_weights: {},
         operator_name: "",
         batch_number: "",
         observations: ""
@@ -291,19 +338,40 @@ const Fillings = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="weight_filled">Peso Llenado (kg)</Label>
-                  <Input
-                    id="weight_filled"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={formData.weight_filled}
-                    onChange={(e) => setFormData(prev => ({ ...prev, weight_filled: e.target.value }))}
-                    required
-                  />
+              {/* Individual Cylinder Weights */}
+              {formData.selected_cylinders.length > 0 && (
+                <div className="border p-4 rounded-lg">
+                  <h3 className="font-medium mb-3">Peso Individual por Cilindro (kg)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-40 overflow-y-auto">
+                    {formData.selected_cylinders.map((cylinderId) => {
+                      const cylinder = availableCylinders.find(c => c.id === cylinderId);
+                      return (
+                        <div key={cylinderId} className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <Label htmlFor={`weight-${cylinderId}`} className="text-sm font-medium">
+                              {cylinder?.serial_number}
+                            </Label>
+                            <div className="text-xs text-muted-foreground">{cylinder?.capacity}</div>
+                          </div>
+                          <Input
+                            id={`weight-${cylinderId}`}
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            placeholder="0.0"
+                            value={formData.cylinder_weights[cylinderId] || ""}
+                            onChange={(e) => handleWeightChange(cylinderId, e.target.value)}
+                            className="w-24"
+                            required
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="operator_name">Operador</Label>
                   <Input

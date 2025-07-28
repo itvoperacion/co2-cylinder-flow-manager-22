@@ -20,8 +20,10 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
-  Package
+  Package,
+  CheckCircle2
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Cylinder {
   id: string;
@@ -55,7 +57,7 @@ const Fillings = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [formData, setFormData] = useState({
-    cylinder_id: "",
+    selected_cylinders: [] as string[],
     weight_filled: "",
     operator_name: "",
     batch_number: "",
@@ -114,8 +116,33 @@ const Fillings = () => {
     }
   };
 
+  const handleCylinderSelection = (cylinderId: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      selected_cylinders: checked 
+        ? [...prev.selected_cylinders, cylinderId]
+        : prev.selected_cylinders.filter(id => id !== cylinderId)
+    }));
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      selected_cylinders: checked ? availableCylinders.map(c => c.id) : []
+    }));
+  };
+
   const handleAddFilling = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (formData.selected_cylinders.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar al menos un cilindro.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       // Obtener el tank_id (asumiendo que hay un solo tanque por ahora)
@@ -129,27 +156,38 @@ const Fillings = () => {
         throw new Error('No se encontró tanque de CO2');
       }
 
-      const { error } = await supabase
-        .from('fillings')
-        .insert([{
-          cylinder_id: formData.cylinder_id,
-          tank_id: tanks[0].id,
-          weight_filled: parseFloat(formData.weight_filled),
-          operator_name: formData.operator_name,
-          batch_number: formData.batch_number || null,
-          observations: formData.observations || null
-        }]);
+      // Crear registros de llenado para cada cilindro seleccionado
+      const fillingRecords = formData.selected_cylinders.map(cylinderId => ({
+        cylinder_id: cylinderId,
+        tank_id: tanks[0].id,
+        weight_filled: parseFloat(formData.weight_filled),
+        operator_name: formData.operator_name,
+        batch_number: formData.batch_number || null,
+        observations: formData.observations || null
+      }));
 
-      if (error) throw error;
+      const { error: fillingsError } = await supabase
+        .from('fillings')
+        .insert(fillingRecords);
+
+      if (fillingsError) throw fillingsError;
+
+      // Actualizar el estado de los cilindros a "lleno"
+      const { error: statusError } = await supabase
+        .from('cylinders')
+        .update({ current_status: 'lleno' })
+        .in('id', formData.selected_cylinders);
+
+      if (statusError) throw statusError;
 
       toast({
         title: "Éxito",
-        description: "Llenado registrado correctamente.",
+        description: `${formData.selected_cylinders.length} llenado(s) registrado(s) correctamente.`,
       });
 
       setShowAddDialog(false);
       setFormData({
-        cylinder_id: "",
+        selected_cylinders: [],
         weight_filled: "",
         operator_name: "",
         batch_number: "",
@@ -203,31 +241,57 @@ const Fillings = () => {
               <DialogTitle>Registrar Nuevo Llenado</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleAddFilling} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="cylinder_id">Cilindro</Label>
-                  <Select
-                    value={formData.cylinder_id}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, cylinder_id: value }))}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un cilindro" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableCylinders.map((cylinder) => (
-                        <SelectItem key={cylinder.id} value={cylinder.id}>
-                          {cylinder.serial_number} - {cylinder.capacity}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {availableCylinders.length === 0 && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      No hay cilindros disponibles para llenado
-                    </p>
+              {/* Cylinder Selection */}
+              <div className="border p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-medium">Seleccionar Cilindros para Llenar</h3>
+                  {availableCylinders.length > 0 && (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="select-all-fillings"
+                        checked={formData.selected_cylinders.length === availableCylinders.length}
+                        onCheckedChange={handleSelectAll}
+                      />
+                      <Label htmlFor="select-all-fillings" className="text-sm">
+                        Seleccionar todos ({availableCylinders.length})
+                      </Label>
+                    </div>
                   )}
                 </div>
+                
+                {availableCylinders.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No hay cilindros vacíos disponibles para llenado
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
+                    {availableCylinders.map((cylinder) => (
+                      <div key={cylinder.id} className="flex items-center space-x-2 p-2 border rounded">
+                        <Checkbox
+                          id={`filling-${cylinder.id}`}
+                          checked={formData.selected_cylinders.includes(cylinder.id)}
+                          onCheckedChange={(checked) => handleCylinderSelection(cylinder.id, checked as boolean)}
+                        />
+                        <Label htmlFor={`filling-${cylinder.id}`} className="flex-1 cursor-pointer">
+                          <div className="text-sm font-medium">{cylinder.serial_number}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {cylinder.capacity} • {cylinder.current_status}
+                          </div>
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {formData.selected_cylinders.length > 0 && (
+                  <div className="mt-3 p-2 bg-primary/10 rounded text-sm">
+                    <CheckCircle2 className="h-4 w-4 inline mr-1" />
+                    {formData.selected_cylinders.length} cilindro(s) seleccionado(s)
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="weight_filled">Peso Llenado (kg)</Label>
                   <Input
@@ -272,7 +336,7 @@ const Fillings = () => {
                 <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={availableCylinders.length === 0}>
+                <Button type="submit" disabled={availableCylinders.length === 0 || formData.selected_cylinders.length === 0}>
                   Registrar Llenado
                 </Button>
               </div>

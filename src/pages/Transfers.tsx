@@ -214,11 +214,29 @@ const Transfers = () => {
         observations: formData.observations || null
       }));
 
-      const { error } = await supabase
+      const { error: transferError } = await supabase
         .from('transfers')
         .insert(transferRecords);
 
-      if (error) throw error;
+      if (transferError) throw transferError;
+
+      // Update cylinder locations
+      const { error: locationError } = await supabase
+        .from('cylinders')
+        .update({ current_location: formData.to_location })
+        .in('id', formData.selected_cylinders);
+
+      if (locationError) throw locationError;
+
+      // If transferring from "despacho" to "estacion_llenado", update status to "vacio"
+      if (formData.from_location === 'despacho' && formData.to_location === 'estacion_llenado') {
+        const { error: statusError } = await supabase
+          .from('cylinders')
+          .update({ current_status: 'vacio' })
+          .in('id', formData.selected_cylinders);
+
+        if (statusError) throw statusError;
+      }
 
       toast({
         title: "Éxito",

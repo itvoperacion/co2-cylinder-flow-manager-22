@@ -180,8 +180,9 @@ const Fillings = () => {
     try {
       // Obtener el tank_id (asumiendo que hay un solo tanque por ahora)
       const { data: tanks, error: tanksError } = await supabase
-        .from('co2_tank')
+        .from('tanks')
         .select('id')
+        .eq('is_active', true)
         .limit(1);
 
       if (tanksError) throw tanksError;

@@ -21,7 +21,9 @@ import {
   Clock,
   AlertTriangle,
   Package,
-  CheckCircle2
+  CheckCircle2,
+  QrCode,
+  ShieldCheck
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -43,6 +45,9 @@ interface Filling {
   observations: string | null;
   created_at: string;
   updated_at: string;
+  filling_datetime?: string;
+  is_approved?: boolean;
+  approved_by?: string | null;
   cylinders?: Cylinder;
 }
 
@@ -61,7 +66,10 @@ const Fillings = () => {
     cylinder_weights: {} as { [cylinderId: string]: string },
     operator_name: "",
     batch_number: "",
-    observations: ""
+    observations: "",
+    filling_datetime: new Date().toISOString().slice(0, 16),
+    is_approved: false,
+    approved_by: ""
   });
 
   useEffect(() => {
@@ -210,7 +218,10 @@ const Fillings = () => {
         weight_filled: parseFloat(formData.cylinder_weights[cylinderId]),
         operator_name: formData.operator_name,
         batch_number: formData.batch_number || null,
-        observations: formData.observations || null
+        observations: formData.observations || null,
+        filling_datetime: formData.filling_datetime,
+        is_approved: formData.is_approved,
+        approved_by: formData.approved_by || null
       }));
 
       const { error: fillingsError } = await supabase
@@ -219,10 +230,13 @@ const Fillings = () => {
 
       if (fillingsError) throw fillingsError;
 
-      // Actualizar el estado de los cilindros a "lleno"
+      // Actualizar el estado y ubicación de los cilindros
       const { error: statusError } = await supabase
         .from('cylinders')
-        .update({ current_status: 'lleno' })
+        .update({ 
+          current_status: 'lleno',
+          current_location: 'estacion_llenado' // Asegurar que estén en estación de llenado
+        })
         .in('id', formData.selected_cylinders);
 
       if (statusError) throw statusError;
@@ -238,7 +252,10 @@ const Fillings = () => {
         cylinder_weights: {},
         operator_name: "",
         batch_number: "",
-        observations: ""
+        observations: "",
+        filling_datetime: new Date().toISOString().slice(0, 16),
+        is_approved: false,
+        approved_by: ""
       });
       fetchFillings();
       fetchAvailableCylinders();
@@ -371,34 +388,100 @@ const Fillings = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="operator_name">Operador</Label>
-                  <Input
-                    id="operator_name"
-                    value={formData.operator_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, operator_name: e.target.value }))}
-                    required
-                  />
+              {/* Date/Time and QR Scanner Section */}
+              <div className="border p-4 rounded-lg">
+                <h3 className="font-medium mb-3 flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Información del Llenado
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="filling_datetime">Fecha y Hora del Llenado *</Label>
+                    <Input
+                      id="filling_datetime"
+                      type="datetime-local"
+                      value={formData.filling_datetime}
+                      onChange={(e) => setFormData(prev => ({ ...prev, filling_datetime: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="operator_name">Operador *</Label>
+                    <Input
+                      id="operator_name"
+                      value={formData.operator_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, operator_name: e.target.value }))}
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="batch_number">Número de Lote</Label>
-                  <Input
-                    id="batch_number"
-                    value={formData.batch_number}
-                    onChange={(e) => setFormData(prev => ({ ...prev, batch_number: e.target.value }))}
-                    placeholder="Opcional"
-                  />
+                
+                {/* QR Scanner Placeholder */}
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                    <QrCode className="h-4 w-4" />
+                    <span className="text-sm font-medium">Escáner QR/Código de Barras</span>
+                  </div>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    Funcionalidad de escaneo próximamente disponible. Por ahora, selecciona cilindros manualmente.
+                  </p>
                 </div>
-                <div className="col-span-2">
-                  <Label htmlFor="observations">Observaciones</Label>
-                  <Textarea
-                    id="observations"
-                    value={formData.observations}
-                    onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
-                    placeholder="Observaciones del llenado..."
-                  />
+              </div>
+
+              {/* Batch and Approval Section */}
+              <div className="border p-4 rounded-lg">
+                <h3 className="font-medium mb-3 flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4" />
+                  Control de Calidad y Lote
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="batch_number">Número de Lote</Label>
+                    <Input
+                      id="batch_number"
+                      value={formData.batch_number}
+                      onChange={(e) => setFormData(prev => ({ ...prev, batch_number: e.target.value }))}
+                      placeholder="Opcional"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="approved_by">Aprobado por</Label>
+                    <Input
+                      id="approved_by"
+                      value={formData.approved_by}
+                      onChange={(e) => setFormData(prev => ({ ...prev, approved_by: e.target.value }))}
+                      placeholder="Supervisor (opcional)"
+                    />
+                  </div>
                 </div>
+                
+                {/* Approval Checkbox */}
+                <div className="mt-4 flex items-center space-x-2">
+                  <Checkbox
+                    id="is_approved"
+                    checked={formData.is_approved}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_approved: checked as boolean }))}
+                  />
+                  <Label htmlFor="is_approved" className="text-sm font-medium">
+                    Marcar lote como APROBADO
+                  </Label>
+                  {formData.is_approved && (
+                    <Badge variant="secondary" className="ml-2">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Aprobado
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="observations">Observaciones</Label>
+                <Textarea
+                  id="observations"
+                  value={formData.observations}
+                  onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
+                  placeholder="Observaciones del llenado..."
+                />
               </div>
               <div className="flex gap-2 justify-end">
                 <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
@@ -562,7 +645,7 @@ const Fillings = () => {
                   {getStatusBadge()}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Weight className="h-4 w-4 text-muted-foreground" />
                     <div>
@@ -584,9 +667,15 @@ const Fillings = () => {
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <span className="font-medium">Fecha:</span>
+                      <span className="font-medium">Fecha Llenado:</span>
                       <br />
-                      <span>{new Date(filling.created_at).toLocaleDateString()}</span>
+                      <span>
+                        {filling.filling_datetime 
+                          ? new Date(filling.filling_datetime).toLocaleDateString() + ' ' + 
+                            new Date(filling.filling_datetime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                          : new Date(filling.created_at).toLocaleDateString()
+                        }
+                      </span>
                     </div>
                   </div>
                   
@@ -600,7 +689,35 @@ const Fillings = () => {
                       </div>
                     </div>
                   )}
+
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-medium">Estado:</span>
+                      <br />
+                      <div className="flex items-center gap-1">
+                        {filling.is_approved ? (
+                          <Badge variant="secondary" className="text-xs">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Aprobado
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Pendiente
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Additional info row */}
+                {filling.approved_by && (
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    <span className="font-medium">Aprobado por:</span> {filling.approved_by}
+                  </div>
+                )}
 
                 {filling.observations && (
                   <div className="mt-4 p-3 bg-muted/50 rounded-lg">

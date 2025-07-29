@@ -97,10 +97,13 @@ export type Database = {
       }
       fillings: {
         Row: {
+          approved_by: string | null
           batch_number: string | null
           created_at: string
           cylinder_id: string
+          filling_datetime: string | null
           id: string
+          is_approved: boolean | null
           observations: string | null
           operator_name: string
           tank_id: string
@@ -108,10 +111,13 @@ export type Database = {
           weight_filled: number
         }
         Insert: {
+          approved_by?: string | null
           batch_number?: string | null
           created_at?: string
           cylinder_id: string
+          filling_datetime?: string | null
           id?: string
+          is_approved?: boolean | null
           observations?: string | null
           operator_name: string
           tank_id: string
@@ -119,10 +125,13 @@ export type Database = {
           weight_filled: number
         }
         Update: {
+          approved_by?: string | null
           batch_number?: string | null
           created_at?: string
           cylinder_id?: string
+          filling_datetime?: string | null
           id?: string
+          is_approved?: boolean | null
           observations?: string | null
           operator_name?: string
           tank_id?: string
@@ -141,7 +150,7 @@ export type Database = {
             foreignKeyName: "fillings_tank_id_fkey"
             columns: ["tank_id"]
             isOneToOne: false
-            referencedRelation: "tanks"
+            referencedRelation: "co2_tank"
             referencedColumns: ["id"]
           },
         ]

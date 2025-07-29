@@ -406,12 +406,12 @@ const Fillings = () => {
                         </div>
                       </div>
                       <div>
-                        <span className="font-medium">Merma (2%):</span>
+                        <span className="font-medium">Merma (1%):</span>
                         <div>
                           {(formData.selected_cylinders.reduce((total, cylinderId) => {
                             const weight = parseFloat(formData.cylinder_weights[cylinderId] || "0");
                             return total + weight;
-                          }, 0) * 0.02).toFixed(1)} kg
+                          }, 0) * 0.01).toFixed(1)} kg
                         </div>
                       </div>
                       <div>
@@ -420,7 +420,7 @@ const Fillings = () => {
                           {(formData.selected_cylinders.reduce((total, cylinderId) => {
                             const weight = parseFloat(formData.cylinder_weights[cylinderId] || "0");
                             return total + weight;
-                          }, 0) * 1.02).toFixed(1)} kg
+                          }, 0) * 1.01).toFixed(1)} kg
                         </div>
                       </div>
                     </div>

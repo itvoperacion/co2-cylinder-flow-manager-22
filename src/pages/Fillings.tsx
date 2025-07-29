@@ -771,10 +771,10 @@ const Fillings = () => {
                         <span className="font-medium">Peso llenado:</span> {filling.weight_filled} kg
                       </div>
                       <div>
-                        <span className="font-medium">Merma ({filling.shrinkage_percentage || 2}%):</span> {(filling.shrinkage_amount || (filling.weight_filled * 0.02)).toFixed(1)} kg
+                        <span className="font-medium">Merma ({filling.shrinkage_percentage || 1}%):</span> {(filling.shrinkage_amount || (filling.weight_filled * 0.01)).toFixed(1)} kg
                       </div>
                       <div>
-                        <span className="font-medium">Total del tanque:</span> {(filling.weight_filled + (filling.shrinkage_amount || (filling.weight_filled * 0.02))).toFixed(1)} kg
+                        <span className="font-medium">Total del tanque:</span> {(filling.weight_filled + (filling.shrinkage_amount || (filling.weight_filled * 0.01))).toFixed(1)} kg
                       </div>
                     </div>
                   </div>

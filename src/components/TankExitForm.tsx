@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Minus, Loader2 } from "lucide-react";
+import { Minus, Loader2, TrendingDown } from "lucide-react";
 
 const exitSchema = z.object({
   quantity: z.number().min(0.1, "La cantidad debe ser mayor a 0"),
@@ -46,17 +46,21 @@ const TankExitForm = ({ onExitAdded }: TankExitFormProps) => {
 
       if (tankError) throw tankError;
 
-      // Verificar que hay suficiente inventario
-      if (tankData.current_level < data.quantity) {
+      // Calcular la merma del 3% para salidas
+      const shrinkageAmount = data.quantity * 0.03;
+      const totalWithShrinkage = data.quantity + shrinkageAmount;
+
+      // Verificar que hay suficiente inventario incluyendo la merma
+      if (tankData.current_level < totalWithShrinkage) {
         toast({
           title: "Inventario insuficiente",
-          description: `No hay suficiente CO2 en el tanque. Disponible: ${tankData.current_level} kg`,
+          description: `No hay suficiente CO2 en el tanque. Disponible: ${tankData.current_level} kg, necesario: ${totalWithShrinkage.toFixed(1)} kg (incluye 3% merma)`,
           variant: "destructive",
         });
         return;
       }
 
-      // Registrar la salida
+      // Registrar la salida con información de merma
       const { error: exitError } = await supabase
         .from('tank_movements')
         .insert({
@@ -65,13 +69,15 @@ const TankExitForm = ({ onExitAdded }: TankExitFormProps) => {
           quantity: data.quantity,
           operator_name: data.operator_name,
           observations: data.observations,
+          shrinkage_percentage: 3.0,
+          shrinkage_amount: shrinkageAmount,
         });
 
       if (exitError) throw exitError;
 
       toast({
         title: "Salida registrada",
-        description: `Se descontaron ${data.quantity} kg de CO2 del tanque principal.`,
+        description: `Se descontaron ${data.quantity} kg de CO2 + ${shrinkageAmount.toFixed(1)} kg de merma (3%) = ${totalWithShrinkage.toFixed(1)} kg total del tanque.`,
       });
 
       form.reset();
@@ -152,6 +158,28 @@ const TankExitForm = ({ onExitAdded }: TankExitFormProps) => {
                 </FormItem>
               )}
             />
+
+            {/* Shrinkage Indicator */}
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 mb-2">
+                <TrendingDown className="h-4 w-4" />
+                <span className="text-sm font-medium">Indicador de Merma (3% para Descargas)</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-yellow-600 dark:text-yellow-400">
+                <div>
+                  <span className="font-medium">Cantidad base:</span>
+                  <div>{form.watch('quantity') || 0} kg</div>
+                </div>
+                <div>
+                  <span className="font-medium">Merma (3%):</span>
+                  <div>{((form.watch('quantity') || 0) * 0.03).toFixed(1)} kg</div>
+                </div>
+                <div>
+                  <span className="font-medium">Total del tanque:</span>
+                  <div>{((form.watch('quantity') || 0) * 1.03).toFixed(1)} kg</div>
+                </div>
+              </div>
+            </div>
 
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? (

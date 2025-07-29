@@ -106,6 +106,8 @@ export type Database = {
           is_approved: boolean | null
           observations: string | null
           operator_name: string
+          shrinkage_amount: number | null
+          shrinkage_percentage: number | null
           tank_id: string
           updated_at: string
           weight_filled: number
@@ -120,6 +122,8 @@ export type Database = {
           is_approved?: boolean | null
           observations?: string | null
           operator_name: string
+          shrinkage_amount?: number | null
+          shrinkage_percentage?: number | null
           tank_id: string
           updated_at?: string
           weight_filled: number
@@ -134,6 +138,8 @@ export type Database = {
           is_approved?: boolean | null
           observations?: string | null
           operator_name?: string
+          shrinkage_amount?: number | null
+          shrinkage_percentage?: number | null
           tank_id?: string
           updated_at?: string
           weight_filled?: number
@@ -227,6 +233,8 @@ export type Database = {
           operator_name: string
           quantity: number
           reference_filling_id: string | null
+          shrinkage_amount: number | null
+          shrinkage_percentage: number | null
           supplier: string | null
           tank_id: string
           updated_at: string
@@ -239,6 +247,8 @@ export type Database = {
           operator_name: string
           quantity: number
           reference_filling_id?: string | null
+          shrinkage_amount?: number | null
+          shrinkage_percentage?: number | null
           supplier?: string | null
           tank_id: string
           updated_at?: string
@@ -251,6 +261,8 @@ export type Database = {
           operator_name?: string
           quantity?: number
           reference_filling_id?: string | null
+          shrinkage_amount?: number | null
+          shrinkage_percentage?: number | null
           supplier?: string | null
           tank_id?: string
           updated_at?: string

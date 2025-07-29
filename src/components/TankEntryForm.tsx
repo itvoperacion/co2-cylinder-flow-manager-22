@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, TrendingDown } from "lucide-react";
 
 const entrySchema = z.object({
   quantity: z.number().min(0.1, "La cantidad debe ser mayor a 0"),
@@ -48,7 +48,11 @@ const TankEntryForm = ({ onEntryAdded }: TankEntryFormProps) => {
 
       if (tankError) throw tankError;
 
-      // Registrar la entrada
+      // Calcular la merma del 3% y actualizar datos
+      const shrinkageAmount = data.quantity * 0.03;
+      const totalWithShrinkage = data.quantity + shrinkageAmount;
+
+      // Registrar la entrada con información de merma
       const { error: entryError } = await supabase
         .from('tank_movements')
         .insert({
@@ -58,13 +62,15 @@ const TankEntryForm = ({ onEntryAdded }: TankEntryFormProps) => {
           operator_name: data.operator_name,
           supplier: data.supplier,
           observations: data.observations,
+          shrinkage_percentage: 3.0,
+          shrinkage_amount: shrinkageAmount,
         });
 
       if (entryError) throw entryError;
 
       toast({
         title: "Entrada registrada",
-        description: `Se agregaron ${data.quantity} kg de CO2 al tanque principal.`,
+        description: `Se agregaron ${data.quantity} kg de CO2 + ${shrinkageAmount.toFixed(1)} kg de merma (3%) = ${totalWithShrinkage.toFixed(1)} kg total al tanque.`,
       });
 
       form.reset();
@@ -159,6 +165,28 @@ const TankEntryForm = ({ onEntryAdded }: TankEntryFormProps) => {
                 </FormItem>
               )}
             />
+
+            {/* Shrinkage Indicator */}
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 mb-2">
+                <TrendingDown className="h-4 w-4" />
+                <span className="text-sm font-medium">Indicador de Merma (3% para Recargas)</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-yellow-600 dark:text-yellow-400">
+                <div>
+                  <span className="font-medium">Cantidad base:</span>
+                  <div>{form.watch('quantity') || 0} kg</div>
+                </div>
+                <div>
+                  <span className="font-medium">Merma (3%):</span>
+                  <div>{((form.watch('quantity') || 0) * 0.03).toFixed(1)} kg</div>
+                </div>
+                <div>
+                  <span className="font-medium">Total al tanque:</span>
+                  <div>{((form.watch('quantity') || 0) * 1.03).toFixed(1)} kg</div>
+                </div>
+              </div>
+            </div>
 
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? (

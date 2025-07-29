@@ -23,7 +23,8 @@ import {
   Package,
   CheckCircle2,
   QrCode,
-  ShieldCheck
+  ShieldCheck,
+  TrendingDown
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -48,6 +49,8 @@ interface Filling {
   filling_datetime?: string;
   is_approved?: boolean;
   approved_by?: string | null;
+  shrinkage_percentage?: number;
+  shrinkage_amount?: number;
   cylinders?: Cylinder;
 }
 
@@ -385,6 +388,43 @@ const Fillings = () => {
                       );
                     })}
                   </div>
+
+                  {/* Shrinkage Information */}
+                  <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 mb-2">
+                      <TrendingDown className="h-4 w-4" />
+                      <span className="text-sm font-medium">Indicador de Merma</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-yellow-600 dark:text-yellow-400">
+                      <div>
+                        <span className="font-medium">Total a llenar:</span>
+                        <div>
+                          {formData.selected_cylinders.reduce((total, cylinderId) => {
+                            const weight = parseFloat(formData.cylinder_weights[cylinderId] || "0");
+                            return total + weight;
+                          }, 0).toFixed(1)} kg
+                        </div>
+                      </div>
+                      <div>
+                        <span className="font-medium">Merma (2%):</span>
+                        <div>
+                          {(formData.selected_cylinders.reduce((total, cylinderId) => {
+                            const weight = parseFloat(formData.cylinder_weights[cylinderId] || "0");
+                            return total + weight;
+                          }, 0) * 0.02).toFixed(1)} kg
+                        </div>
+                      </div>
+                      <div>
+                        <span className="font-medium">Total del tanque:</span>
+                        <div>
+                          {(formData.selected_cylinders.reduce((total, cylinderId) => {
+                            const weight = parseFloat(formData.cylinder_weights[cylinderId] || "0");
+                            return total + weight;
+                          }, 0) * 1.02).toFixed(1)} kg
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -716,6 +756,27 @@ const Fillings = () => {
                 {filling.approved_by && (
                   <div className="mt-3 text-xs text-muted-foreground">
                     <span className="font-medium">Aprobado por:</span> {filling.approved_by}
+                  </div>
+                )}
+
+                {/* Shrinkage Information Display */}
+                {(filling.shrinkage_percentage || filling.shrinkage_amount) && (
+                  <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 mb-1">
+                      <TrendingDown className="h-4 w-4" />
+                      <span className="text-sm font-medium">Información de Merma</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-yellow-600 dark:text-yellow-400">
+                      <div>
+                        <span className="font-medium">Peso llenado:</span> {filling.weight_filled} kg
+                      </div>
+                      <div>
+                        <span className="font-medium">Merma ({filling.shrinkage_percentage || 2}%):</span> {(filling.shrinkage_amount || (filling.weight_filled * 0.02)).toFixed(1)} kg
+                      </div>
+                      <div>
+                        <span className="font-medium">Total del tanque:</span> {(filling.weight_filled + (filling.shrinkage_amount || (filling.weight_filled * 0.02))).toFixed(1)} kg
+                      </div>
+                    </div>
                   </div>
                 )}
 

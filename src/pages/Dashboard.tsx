@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import TankIndicator from "@/components/TankIndicator";
 import CylinderStats from "@/components/CylinderStats";
+import CylinderInventoryByLocation from "@/components/CylinderInventoryByLocation";
+import ShrinkageReport from "@/components/ShrinkageReport";
 import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -214,6 +216,15 @@ const Dashboard = () => {
 
         {/* Cylinder Statistics */}
         <CylinderStats />
+
+        {/* New Dashboard Sections */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Cylinder Inventory by Location */}
+          <CylinderInventoryByLocation />
+          
+          {/* Shrinkage Report */}
+          <ShrinkageReport />
+        </div>
       </div>
     </Layout>
   );

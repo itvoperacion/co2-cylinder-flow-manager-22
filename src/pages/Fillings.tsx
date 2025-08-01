@@ -27,6 +27,7 @@ import {
   TrendingDown
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import BatchFillingManager from "@/components/BatchFillingManager";
 
 interface Cylinder {
   id: string;
@@ -283,8 +284,26 @@ const Fillings = () => {
 
   const filteredFillings = fillings.filter(filling => {
     const matchesSearch = filling.cylinders?.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         filling.operator_name.toLowerCase().includes(searchTerm.toLowerCase());
+                         filling.operator_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (filling.batch_number && filling.batch_number.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesSearch;
+  });
+
+  // Group fillings by batch number
+  const groupedFillings = filteredFillings.reduce((groups: { [key: string]: Filling[] }, filling) => {
+    const batchKey = filling.batch_number || `individual-${filling.id}`;
+    if (!groups[batchKey]) {
+      groups[batchKey] = [];
+    }
+    groups[batchKey].push(filling);
+    return groups;
+  }, {});
+
+  const sortedBatches = Object.entries(groupedFillings).sort(([, a], [, b]) => {
+    // Sort by most recent filling in each batch
+    const aLatest = Math.max(...a.map(f => new Date(f.created_at).getTime()));
+    const bLatest = Math.max(...b.map(f => new Date(f.created_at).getTime()));
+    return bLatest - aLatest;
   });
 
   return (
@@ -664,131 +683,133 @@ const Fillings = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {filteredFillings.map((filling) => (
-            <Card key={filling.id} className="shadow-industrial hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Droplets className="h-5 w-5 text-primary" />
+        <div className="space-y-6">
+          {sortedBatches.map(([batchKey, batchFillings]) => {
+            // Check if it's a real batch or individual filling
+            const isRealBatch = !batchKey.startsWith('individual-');
+            const batchNumber = isRealBatch ? batchKey : `Individual-${batchFillings[0].id.slice(0, 8)}`;
+            
+            if (isRealBatch) {
+              // Use BatchFillingManager for real batches
+              return (
+                <BatchFillingManager
+                  key={batchKey}
+                  batchNumber={batchNumber}
+                  fillings={batchFillings}
+                  onUpdate={fetchFillings}
+                />
+              );
+            } else {
+              // Render individual filling as before
+              const filling = batchFillings[0];
+              return (
+                <Card key={filling.id} className="shadow-industrial hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Droplets className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">
+                            Cilindro: {filling.cylinders?.serial_number || 'N/A'}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {filling.cylinders?.capacity || 'N/A'} • Individual
+                          </p>
+                        </div>
+                      </div>
+                      {getStatusBadge()}
                     </div>
-                    <div>
-                      <h3 className="font-semibold">
-                        Cilindro: {filling.cylinders?.serial_number || 'N/A'}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {filling.cylinders?.capacity || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                  {getStatusBadge()}
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Weight className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <span className="font-medium">Peso:</span>
-                      <br />
-                      <span>{filling.weight_filled} kg</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <span className="font-medium">Operador:</span>
-                      <br />
-                      <span>{filling.operator_name}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <span className="font-medium">Fecha Llenado:</span>
-                      <br />
-                      <span>
-                        {filling.filling_datetime 
-                          ? new Date(filling.filling_datetime).toLocaleDateString() + ' ' + 
-                            new Date(filling.filling_datetime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                          : new Date(filling.created_at).toLocaleDateString()
-                        }
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {filling.batch_number && (
-                    <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <span className="font-medium">Lote:</span>
-                        <br />
-                        <span>{filling.batch_number}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Weight className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <span className="font-medium">Peso:</span>
+                          <br />
+                          <span>{filling.weight_filled} kg</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <span className="font-medium">Operador:</span>
+                          <br />
+                          <span>{filling.operator_name}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <span className="font-medium">Fecha:</span>
+                          <br />
+                          <span>
+                            {filling.filling_datetime 
+                              ? new Date(filling.filling_datetime).toLocaleDateString() + ' ' + 
+                                new Date(filling.filling_datetime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                              : new Date(filling.created_at).toLocaleDateString()
+                            }
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <span className="font-medium">Estado:</span>
+                          <br />
+                          <div className="flex items-center gap-1">
+                            {filling.is_approved ? (
+                              <Badge variant="secondary" className="text-xs">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Aprobado
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                <Clock className="h-3 w-3 mr-1" />
+                                Pendiente
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  )}
 
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <span className="font-medium">Estado:</span>
-                      <br />
-                      <div className="flex items-center gap-1">
-                        {filling.is_approved ? (
-                          <Badge variant="secondary" className="text-xs">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Aprobado
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Pendiente
-                          </Badge>
-                        )}
+                    {/* Shrinkage Information Display */}
+                    {(filling.shrinkage_percentage || filling.shrinkage_amount) && (
+                      <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                        <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 mb-1">
+                          <TrendingDown className="h-4 w-4" />
+                          <span className="text-sm font-medium">Información de Merma</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-yellow-600 dark:text-yellow-400">
+                          <div>
+                            <span className="font-medium">Peso llenado:</span> {filling.weight_filled} kg
+                          </div>
+                          <div>
+                            <span className="font-medium">Merma ({filling.shrinkage_percentage || 1}%):</span> {(filling.shrinkage_amount || (filling.weight_filled * 0.01)).toFixed(1)} kg
+                          </div>
+                          <div>
+                            <span className="font-medium">Total del tanque:</span> {(filling.weight_filled + (filling.shrinkage_amount || (filling.weight_filled * 0.01))).toFixed(1)} kg
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
+                    )}
 
-                {/* Additional info row */}
-                {filling.approved_by && (
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    <span className="font-medium">Aprobado por:</span> {filling.approved_by}
-                  </div>
-                )}
-
-                {/* Shrinkage Information Display */}
-                {(filling.shrinkage_percentage || filling.shrinkage_amount) && (
-                  <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                    <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 mb-1">
-                      <TrendingDown className="h-4 w-4" />
-                      <span className="text-sm font-medium">Información de Merma</span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-yellow-600 dark:text-yellow-400">
-                      <div>
-                        <span className="font-medium">Peso llenado:</span> {filling.weight_filled} kg
+                    {filling.observations && (
+                      <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                        <span className="text-sm font-medium text-muted-foreground">Observaciones:</span>
+                        <p className="text-sm mt-1">{filling.observations}</p>
                       </div>
-                      <div>
-                        <span className="font-medium">Merma ({filling.shrinkage_percentage || 1}%):</span> {(filling.shrinkage_amount || (filling.weight_filled * 0.01)).toFixed(1)} kg
-                      </div>
-                      <div>
-                        <span className="font-medium">Total del tanque:</span> {(filling.weight_filled + (filling.shrinkage_amount || (filling.weight_filled * 0.01))).toFixed(1)} kg
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {filling.observations && (
-                  <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm font-medium text-muted-foreground">Observaciones:</span>
-                    <p className="text-sm mt-1">{filling.observations}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            }
+          })}
         </div>
       )}
       </div>

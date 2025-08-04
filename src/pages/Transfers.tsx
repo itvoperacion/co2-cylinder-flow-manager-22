@@ -72,6 +72,7 @@ const Transfers = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState<string>("all");
+  const [capacityFilter, setCapacityFilter] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [formData, setFormData] = useState<TransferFormData>({
     from_location: "",
@@ -283,7 +284,8 @@ const Transfers = () => {
     const matchesLocation = locationFilter === "all" || 
                            transfer.from_location === locationFilter || 
                            transfer.to_location === locationFilter;
-    return matchesSearch && matchesLocation;
+    const matchesCapacity = capacityFilter === "all" || transfer.cylinders?.capacity === capacityFilter;
+    return matchesSearch && matchesLocation && matchesCapacity;
   });
 
   const { needsCustomerInfo, needsDriverInfo } = getRequiredFields();
@@ -544,49 +546,82 @@ const Transfers = () => {
         {/* Filters */}
         <Card className="shadow-industrial">
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="search">Buscar</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="search"
-                    placeholder="Cilindro, operador o cliente..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9"
-                  />
+            <div className="flex flex-col gap-4">
+              {/* Filter Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="search">Buscar</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="search"
+                      placeholder="Cilindro, operador o cliente..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Ubicación</Label>
+                  <Select value={locationFilter} onValueChange={setLocationFilter}>
+                    <SelectTrigger>
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      <SelectItem value="despacho">Despacho</SelectItem>
+                      <SelectItem value="estacion_llenado">Estación de Llenado</SelectItem>
+                      <SelectItem value="asignaciones">Asignaciones</SelectItem>
+                      <SelectItem value="devoluciones">Devoluciones</SelectItem>
+                      <SelectItem value="en_mantenimiento">Mantenimiento</SelectItem>
+                      <SelectItem value="fuera_de_servicio">Fuera de Servicio</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Capacidad</Label>
+                  <Select value={capacityFilter} onValueChange={setCapacityFilter}>
+                    <SelectTrigger>
+                      <Package className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      {Array.from(new Set(transfers.map(t => t.cylinders?.capacity).filter(Boolean))).map(capacity => (
+                        <SelectItem key={capacity} value={capacity!}>
+                          {capacity}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setSearchTerm("");
+                      setLocationFilter("all");
+                      setCapacityFilter("all");
+                    }}
+                    className="w-full"
+                  >
+                    Limpiar Filtros
+                  </Button>
                 </div>
               </div>
-              <div>
-                <Label>Ubicación</Label>
-                <Select value={locationFilter} onValueChange={setLocationFilter}>
-                  <SelectTrigger>
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <SelectItem value="despacho">Despacho</SelectItem>
-                    <SelectItem value="estacion_llenado">Estación de Llenado</SelectItem>
-                    <SelectItem value="asignaciones">Asignaciones</SelectItem>
-                    <SelectItem value="devoluciones">Devoluciones</SelectItem>
-                    <SelectItem value="en_mantenimiento">Mantenimiento</SelectItem>
-                    <SelectItem value="fuera_de_servicio">Fuera de Servicio</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-end">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setSearchTerm("");
-                    setLocationFilter("all");
-                  }}
-                  className="w-full"
-                >
-                  Limpiar Filtros
-                </Button>
+              
+              {/* Cylinder Count Indicator */}
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Cantidad de cilindros:</span>
+                </div>
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <span className="font-bold">{filteredTransfers.length}</span>
+                  <span>traslado{filteredTransfers.length !== 1 ? 's' : ''}</span>
+                </Badge>
               </div>
             </div>
           </CardContent>

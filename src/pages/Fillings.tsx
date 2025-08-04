@@ -64,6 +64,7 @@ const Fillings = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [capacityFilter, setCapacityFilter] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [formData, setFormData] = useState({
     selected_cylinders: [] as string[],
@@ -286,7 +287,8 @@ const Fillings = () => {
     const matchesSearch = filling.cylinders?.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          filling.operator_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (filling.batch_number && filling.batch_number.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesSearch;
+    const matchesCapacity = capacityFilter === "all" || filling.cylinders?.capacity === capacityFilter;
+    return matchesSearch && matchesCapacity;
   });
 
   // Group fillings by batch number
@@ -604,45 +606,78 @@ const Fillings = () => {
       {/* Filters */}
       <Card className="shadow-industrial">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="search">Buscar</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Cilindro o operador..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
+          <div className="flex flex-col gap-4">
+            {/* Filter Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="search">Buscar</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="search"
+                    placeholder="Cilindro o operador..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Filtro de Fecha</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="today">Hoy</SelectItem>
+                    <SelectItem value="week">Esta Semana</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Capacidad</Label>
+                <Select value={capacityFilter} onValueChange={setCapacityFilter}>
+                  <SelectTrigger>
+                    <Package className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {Array.from(new Set(fillings.map(f => f.cylinders?.capacity).filter(Boolean))).map(capacity => (
+                      <SelectItem key={capacity} value={capacity!}>
+                        {capacity}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter("all");
+                    setCapacityFilter("all");
+                  }}
+                  className="w-full"
+                >
+                  Limpiar Filtros
+                </Button>
               </div>
             </div>
-            <div>
-              <Label>Filtro de Fecha</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="today">Hoy</SelectItem>
-                  <SelectItem value="week">Esta Semana</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSearchTerm("");
-                  setStatusFilter("all");
-                }}
-                className="w-full"
-              >
-                Limpiar Filtros
-              </Button>
+            
+            {/* Cylinder Count Indicator */}
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Cantidad de cilindros:</span>
+              </div>
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <span className="font-bold">{filteredFillings.length}</span>
+                <span>llenado{filteredFillings.length !== 1 ? 's' : ''}</span>
+              </Badge>
             </div>
           </div>
         </CardContent>

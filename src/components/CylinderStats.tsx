@@ -2,71 +2,46 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Cylinder,
-  Package,
-  MapPin,
-  CheckCircle,
-  XCircle,
-  Settings,
-  AlertTriangle,
-  ArrowUpDown,
-  Undo
-} from "lucide-react";
-
+import { Cylinder, Package, MapPin, CheckCircle, XCircle, Settings, AlertTriangle, ArrowUpDown, Undo } from "lucide-react";
 interface CylinderStat {
   status: string;
   location: string;
   capacity: string;
   count: number;
 }
-
 interface LocationStat {
   location: string;
   count: number;
 }
-
 const CylinderStats = () => {
   const [cylinderStats, setCylinderStats] = useState<CylinderStat[]>([]);
   const [locationStats, setLocationStats] = useState<LocationStat[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     fetchStats();
-    
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('cylinder-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'cylinders'
-        },
-        () => fetchStats()
-      )
-      .subscribe();
 
+    // Set up real-time subscription
+    const channel = supabase.channel('cylinder-changes').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'cylinders'
+    }, () => fetchStats()).subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
-
   const fetchStats = async () => {
     try {
       // Fetch cylinder stats by status, location, and capacity
-      const { data: statsData, error: statsError } = await supabase
-        .from('cylinders')
-        .select('current_status, current_location, capacity')
-        .eq('is_active', true);
-
+      const {
+        data: statsData,
+        error: statsError
+      } = await supabase.from('cylinders').select('current_status, current_location, capacity').eq('is_active', true);
       if (statsError) throw statsError;
 
       // Process stats by status and capacity
       const statsMap = new Map<string, number>();
       const locationMap = new Map<string, number>();
-
       statsData?.forEach(cylinder => {
         const key = `${cylinder.current_status}-${cylinder.capacity}`;
         statsMap.set(key, (statsMap.get(key) || 0) + 1);
@@ -77,7 +52,6 @@ const CylinderStats = () => {
       const cylinderStatsArray: CylinderStat[] = [];
       const capacities = ['9kg', '22kg', '25kg'];
       const statuses = ['vacio', 'lleno', 'en_llenado', 'en_mantenimiento', 'fuera_de_servicio'];
-
       statuses.forEach(status => {
         capacities.forEach(capacity => {
           const key = `${status}-${capacity}`;
@@ -90,12 +64,10 @@ const CylinderStats = () => {
           });
         });
       });
-
       const locationStatsArray: LocationStat[] = Array.from(locationMap.entries()).map(([location, count]) => ({
         location,
         count
       }));
-
       setCylinderStats(cylinderStatsArray);
       setLocationStats(locationStatsArray);
     } catch (error) {
@@ -104,56 +76,76 @@ const CylinderStats = () => {
       setLoading(false);
     }
   };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'lleno': return <CheckCircle className="h-4 w-4 text-success" />;
-      case 'vacio': return <XCircle className="h-4 w-4 text-muted-foreground" />;
-      case 'en_llenado': return <ArrowUpDown className="h-4 w-4 text-primary" />;
-      case 'en_mantenimiento': return <Settings className="h-4 w-4 text-warning" />;
-      case 'fuera_de_servicio': return <AlertTriangle className="h-4 w-4 text-destructive" />;
-      default: return <Package className="h-4 w-4" />;
+      case 'lleno':
+        return <CheckCircle className="h-4 w-4 text-success" />;
+      case 'vacio':
+        return <XCircle className="h-4 w-4 text-muted-foreground" />;
+      case 'en_llenado':
+        return <ArrowUpDown className="h-4 w-4 text-primary" />;
+      case 'en_mantenimiento':
+        return <Settings className="h-4 w-4 text-warning" />;
+      case 'fuera_de_servicio':
+        return <AlertTriangle className="h-4 w-4 text-destructive" />;
+      default:
+        return <Package className="h-4 w-4" />;
     }
   };
-
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'lleno': return 'Llenos';
-      case 'vacio': return 'Vacíos';
-      case 'en_llenado': return 'En Llenado';
-      case 'en_mantenimiento': return 'Mantenimiento';
-      case 'fuera_de_servicio': return 'Fuera de Servicio';
-      default: return status;
+      case 'lleno':
+        return 'Llenos';
+      case 'vacio':
+        return 'Vacíos';
+      case 'en_llenado':
+        return 'En Llenado';
+      case 'en_mantenimiento':
+        return 'Mantenimiento';
+      case 'fuera_de_servicio':
+        return 'Fuera de Servicio';
+      default:
+        return status;
     }
   };
-
   const getLocationIcon = (location: string) => {
     switch (location) {
-      case 'despacho': return <Package className="h-4 w-4 text-primary" />;
-      case 'estacion_llenado': return <ArrowUpDown className="h-4 w-4 text-primary" />;
-      case 'en_mantenimiento': return <Settings className="h-4 w-4 text-warning" />;
-      case 'fuera_de_servicio': return <AlertTriangle className="h-4 w-4 text-destructive" />;
-      case 'asignaciones': return <MapPin className="h-4 w-4 text-accent" />;
-      case 'devoluciones': return <Undo className="h-4 w-4 text-secondary-foreground" />;
-      default: return <MapPin className="h-4 w-4" />;
+      case 'despacho':
+        return <Package className="h-4 w-4 text-primary" />;
+      case 'estacion_llenado':
+        return <ArrowUpDown className="h-4 w-4 text-primary" />;
+      case 'en_mantenimiento':
+        return <Settings className="h-4 w-4 text-warning" />;
+      case 'fuera_de_servicio':
+        return <AlertTriangle className="h-4 w-4 text-destructive" />;
+      case 'asignaciones':
+        return <MapPin className="h-4 w-4 text-accent" />;
+      case 'devoluciones':
+        return <Undo className="h-4 w-4 text-secondary-foreground" />;
+      default:
+        return <MapPin className="h-4 w-4" />;
     }
   };
-
   const getLocationLabel = (location: string) => {
     switch (location) {
-      case 'despacho': return 'Despacho';
-      case 'estacion_llenado': return 'Estación de Llenado';
-      case 'en_mantenimiento': return 'En Mantenimiento';
-      case 'fuera_de_servicio': return 'Fuera de Servicio';
-      case 'asignaciones': return 'Asignaciones';
-      case 'devoluciones': return 'Devoluciones';
-      default: return location;
+      case 'despacho':
+        return 'Despacho';
+      case 'estacion_llenado':
+        return 'Estación de Llenado';
+      case 'en_mantenimiento':
+        return 'En Mantenimiento';
+      case 'fuera_de_servicio':
+        return 'Fuera de Servicio';
+      case 'asignaciones':
+        return 'Asignaciones';
+      case 'devoluciones':
+        return 'Devoluciones';
+      default:
+        return location;
     }
   };
-
   if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    return <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="shadow-industrial">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -163,9 +155,7 @@ const CylinderStats = () => {
           </CardHeader>
           <CardContent>
             <div className="animate-pulse space-y-2">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-8 bg-muted rounded"></div>
-              ))}
+              {[1, 2, 3, 4].map(i => <div key={i} className="h-8 bg-muted rounded"></div>)}
             </div>
           </CardContent>
         </Card>
@@ -179,14 +169,11 @@ const CylinderStats = () => {
           </CardHeader>
           <CardContent>
             <div className="animate-pulse space-y-2">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-8 bg-muted rounded"></div>
-              ))}
+              {[1, 2, 3, 4].map(i => <div key={i} className="h-8 bg-muted rounded"></div>)}
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
 
   // Group stats by status for display
@@ -201,7 +188,11 @@ const CylinderStats = () => {
   // Calculate totals by capacity
   const capacityTotals = cylinderStats.reduce((acc, stat) => {
     if (!acc[stat.capacity]) {
-      acc[stat.capacity] = { llenos: 0, vacios: 0, total: 0 };
+      acc[stat.capacity] = {
+        llenos: 0,
+        vacios: 0,
+        total: 0
+      };
     }
     if (stat.status === 'lleno') {
       acc[stat.capacity].llenos += stat.count;
@@ -210,62 +201,20 @@ const CylinderStats = () => {
     }
     acc[stat.capacity].total += stat.count;
     return acc;
-  }, {} as Record<string, { llenos: number; vacios: number; total: number }>);
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  }, {} as Record<string, {
+    llenos: number;
+    vacios: number;
+    total: number;
+  }>);
+  return <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Cylinder Stats by Status */}
       <Card className="shadow-industrial">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Cylinder className="h-5 w-5 text-primary" />
-            Inventario por Estado
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {Object.entries(groupedStats).map(([status, stats]) => (
-            <div key={status} className="space-y-2">
-              <div className="flex items-center gap-2 font-medium">
-                {getStatusIcon(status)}
-                {getStatusLabel(status)}
-              </div>
-              <div className="grid grid-cols-3 gap-2 pl-6">
-                {stats.map((stat, index) => (
-                  <div key={index} className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{stat.capacity}:</span>
-                    <Badge variant="outline" className="ml-2">
-                      {stat.count}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </CardContent>
+        
+        
       </Card>
 
       {/* Location Stats */}
-      <Card className="shadow-industrial">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            Inventario por Ubicación
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {locationStats.map((stat, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {getLocationIcon(stat.location)}
-                <span className="font-medium">{getLocationLabel(stat.location)}</span>
-              </div>
-              <Badge variant="secondary" className="font-semibold">
-                {stat.count}
-              </Badge>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      
 
       {/* Totals by Capacity */}
       <Card className="shadow-industrial lg:col-span-2">
@@ -277,8 +226,7 @@ const CylinderStats = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {Object.entries(capacityTotals).map(([capacity, totals]) => (
-              <div key={capacity} className="p-4 border rounded-lg space-y-3">
+            {Object.entries(capacityTotals).map(([capacity, totals]) => <div key={capacity} className="p-4 border rounded-lg space-y-3">
                 <h4 className="font-semibold text-center">{capacity}</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -306,13 +254,10 @@ const CylinderStats = () => {
                     </Badge>
                   </div>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default CylinderStats;

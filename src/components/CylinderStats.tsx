@@ -206,7 +206,7 @@ const CylinderStats = () => {
     vacios: number;
     total: number;
   }>);
-  return <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  return <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-0">
       {/* Cylinder Stats by Status */}
       <Card className="shadow-industrial">
         

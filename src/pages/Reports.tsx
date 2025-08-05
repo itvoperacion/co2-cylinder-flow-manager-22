@@ -14,7 +14,7 @@ import { es } from "date-fns/locale";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 
-type ReportType = "cylinders" | "fillings" | "transfers" | "tank_movements" | "system_alerts";
+type ReportType = "cylinders" | "fillings" | "transfers" | "tank_movements" | "system_alerts" | "shrinkage";
 
 const Reports = () => {
   const [selectedReport, setSelectedReport] = useState<ReportType>("cylinders");
@@ -25,9 +25,33 @@ const Reports = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['reports', selectedReport, dateFrom, dateTo],
     queryFn: async () => {
-      let query;
+      // Handle shrinkage report separately
+      if (selectedReport === 'shrinkage') {
+        const [fillingsData, tankMovementsData] = await Promise.all([
+          supabase.from('fillings').select('*, cylinders(serial_number, capacity)'),
+          supabase.from('tank_movements').select('*')
+        ]);
+        
+        const combinedData = [
+          ...(fillingsData.data || []).map(f => ({
+            ...f,
+            source_type: 'cylinder_filling',
+            description: `Llenado cilindro ${f.cylinders?.serial_number} (${f.cylinders?.capacity})`,
+            shrinkage_kg: f.shrinkage_amount || 0
+          })),
+          ...(tankMovementsData.data || []).map(t => ({
+            ...t,
+            source_type: 'tank_movement',
+            description: `Movimiento tanque - ${t.movement_type}`,
+            shrinkage_kg: t.shrinkage_amount || 0
+          }))
+        ];
+        
+        return combinedData.filter(item => item.shrinkage_kg > 0);
+      }
       
-      // Build query based on report type
+      // Handle other report types
+      let query;
       if (selectedReport === 'fillings') {
         query = supabase.from('fillings').select('*, cylinders(serial_number, capacity, current_status)');
       } else if (selectedReport === 'transfers') {
@@ -56,6 +80,7 @@ const Reports = () => {
     { value: "fillings", label: "Llenados", description: "Historial de llenados de cilindros" },
     { value: "transfers", label: "Traslados", description: "Movimientos entre ubicaciones" },
     { value: "tank_movements", label: "Movimientos Tanque", description: "Entradas y salidas del tanque principal" },
+    { value: "shrinkage", label: "Reporte de Merma", description: "Análisis de merma en llenados y movimientos" },
     { value: "system_alerts", label: "Alertas", description: "Alertas del sistema" }
   ];
 

@@ -47,6 +47,7 @@ const Cylinders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
+  const [capacityFilter, setCapacityFilter] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [formData, setFormData] = useState({
     serial_number: "",
@@ -172,7 +173,8 @@ const Cylinders = () => {
     const matchesSearch = cylinder.serial_number.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || cylinder.current_status === statusFilter;
     const matchesLocation = locationFilter === "all" || cylinder.current_location === locationFilter;
-    return matchesSearch && matchesStatus && matchesLocation;
+    const matchesCapacity = capacityFilter === "all" || cylinder.capacity === capacityFilter;
+    return matchesSearch && matchesStatus && matchesLocation && matchesCapacity;
   });
 
   return (
@@ -282,7 +284,7 @@ const Cylinders = () => {
       {/* Filters */}
       <Card className="shadow-industrial">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <Label htmlFor="search">Buscar</Label>
               <div className="relative">
@@ -328,6 +330,21 @@ const Cylinders = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label>Capacidad</Label>
+              <Select value={capacityFilter} onValueChange={setCapacityFilter}>
+                <SelectTrigger>
+                  <Weight className="h-4 w-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="9kg">9 kg</SelectItem>
+                  <SelectItem value="22kg">22 kg</SelectItem>
+                  <SelectItem value="25kg">25 kg</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-end">
               <Button 
                 variant="outline" 
@@ -335,6 +352,7 @@ const Cylinders = () => {
                   setSearchTerm("");
                   setStatusFilter("all");
                   setLocationFilter("all");
+                  setCapacityFilter("all");
                 }}
                 className="w-full"
               >

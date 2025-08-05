@@ -17,7 +17,7 @@ const Dashboard = () => {
         </div>
 
         {/* Reporte de Merma - Indicador detallado */}
-        <div className="bg-gradient-to-r from-background to-muted/30 rounded-xl p-6 border border-border/50 shadow-industrial">
+        <div className="bg-gradient-to-r from-background to-muted/30 rounded-xl p-6 border border-border/50 shadow-industrial px-[11px] py-0">
           <ShrinkageReport />
         </div>
 

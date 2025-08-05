@@ -1,6 +1,7 @@
 import TankIndicator from "@/components/TankIndicator";
 import CylinderStats from "@/components/CylinderStats";
 import UnifiedInventoryDashboard from "@/components/UnifiedInventoryDashboard";
+import ShrinkageReport from "@/components/ShrinkageReport";
 import Layout from "@/components/Layout";
 
 const Dashboard = () => {
@@ -15,6 +16,11 @@ const Dashboard = () => {
         {/* Cylinder Statistics - Mejorado visualmente */}
         <div className="bg-gradient-to-r from-background to-muted/30 rounded-xl p-6 border border-border/50 shadow-industrial">
           <CylinderStats />
+        </div>
+
+        {/* Reporte de Merma - Indicador detallado */}
+        <div className="bg-gradient-to-r from-background to-muted/30 rounded-xl p-6 border border-border/50 shadow-industrial">
+          <ShrinkageReport />
         </div>
 
         {/* Inventario Unificado - Componente principal */}

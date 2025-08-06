@@ -189,6 +189,15 @@ const Fillings = () => {
       });
       return;
     }
+
+    if (!formData.is_approved) {
+      toast({
+        title: "Error",
+        description: "Debes marcar la aprobación del llenado antes de registrar.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       // Obtener el tank_id (asumiendo que hay un solo tanque por ahora)
@@ -517,20 +526,27 @@ const Fillings = () => {
                 </div>
                 
                 {/* Approval Checkbox */}
-                <div className="mt-4 flex items-center space-x-2">
-                  <Checkbox
-                    id="is_approved"
-                    checked={formData.is_approved}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_approved: checked as boolean }))}
-                  />
-                  <Label htmlFor="is_approved" className="text-sm font-medium">
-                    Marcar lote como APROBADO
-                  </Label>
-                  {formData.is_approved && (
-                    <Badge variant="secondary" className="ml-2">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Aprobado
-                    </Badge>
+                <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="is_approved"
+                      checked={formData.is_approved}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_approved: checked as boolean }))}
+                    />
+                    <Label htmlFor="is_approved" className="text-sm font-medium text-red-900 dark:text-red-100">
+                      * OBLIGATORIO: Marcar lote como APROBADO para proceder
+                    </Label>
+                    {formData.is_approved && (
+                      <Badge variant="secondary" className="ml-2">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Aprobado
+                      </Badge>
+                    )}
+                  </div>
+                  {!formData.is_approved && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+                      El registro de llenados no estará disponible hasta que se marque esta aprobación.
+                    </p>
                   )}
                 </div>
               </div>
@@ -548,7 +564,14 @@ const Fillings = () => {
                 <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={availableCylinders.length === 0 || formData.selected_cylinders.length === 0}>
+                <Button 
+                  type="submit" 
+                  disabled={
+                    availableCylinders.length === 0 || 
+                    formData.selected_cylinders.length === 0 || 
+                    !formData.is_approved
+                  }
+                >
                   Registrar Llenado
                 </Button>
               </div>

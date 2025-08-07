@@ -354,6 +354,7 @@ export type Database = {
           reversed_at: string | null
           reversed_by: string | null
           to_location: string
+          transfer_number: string | null
         }
         Insert: {
           created_at?: string
@@ -367,6 +368,7 @@ export type Database = {
           reversed_at?: string | null
           reversed_by?: string | null
           to_location: string
+          transfer_number?: string | null
         }
         Update: {
           created_at?: string
@@ -380,6 +382,7 @@ export type Database = {
           reversed_at?: string | null
           reversed_by?: string | null
           to_location?: string
+          transfer_number?: string | null
         }
         Relationships: [
           {

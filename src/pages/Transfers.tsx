@@ -43,6 +43,7 @@ interface Transfer {
   operator_name: string;
   observations: string | null;
   created_at: string;
+  transfer_number?: string | null;
   is_reversed?: boolean;
   reversed_at?: string | null;
   reversed_by?: string | null;
@@ -57,9 +58,11 @@ interface TransferFormData {
   driver_name: string;
   customer_name: string;
   delivery_note_number: string;
+  transfer_number: string;
   observations: string;
   transfer_date: string;
   selected_cylinders: string[];
+  cylinders_status: { [key: string]: string };
 }
 
 const locationLabels = {
@@ -87,10 +90,13 @@ const Transfers = () => {
     driver_name: "",
     customer_name: "",
     delivery_note_number: "",
+    transfer_number: "",
     observations: "",
     transfer_date: new Date().toISOString().split('T')[0],
-    selected_cylinders: []
+    selected_cylinders: [],
+    cylinders_status: {}
   });
+  const [availableTransfers, setAvailableTransfers] = useState<Transfer[]>([]);
   const [reversalDialog, setReversalDialog] = useState<{
     open: boolean;
     recordId: string;
@@ -104,10 +110,14 @@ const Transfers = () => {
   useEffect(() => {
     if (formData.from_location) {
       fetchAvailableCylinders(formData.from_location);
+      // Si es de asignaciones a devoluciones, cargar traslados disponibles
+      if (formData.from_location === 'asignaciones' && formData.to_location === 'devoluciones') {
+        fetchAvailableTransfers();
+      }
     } else {
       setAvailableCylinders([]);
     }
-  }, [formData.from_location]);
+  }, [formData.from_location, formData.to_location]);
 
   const fetchTransfers = async () => {
     try {
@@ -141,20 +151,52 @@ const Transfers = () => {
 
   const fetchAvailableCylinders = async (location: string) => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('cylinders')
         .select('*')
         .eq('current_location', location as any)
-        .eq('is_active', true)
-        .order('serial_number');
+        .eq('is_active', true);
+
+      // Si es traslado de estación de llenado a despacho, solo cilindros llenos
+      if (formData.from_location === 'estacion_llenado' && formData.to_location === 'despacho') {
+        query = query.eq('current_status', 'lleno');
+      }
+
+      const { data, error } = await query.order('serial_number');
 
       if (error) throw error;
       setAvailableCylinders(data || []);
       // Reset selected cylinders when location changes
-      setFormData(prev => ({ ...prev, selected_cylinders: [] }));
+      setFormData(prev => ({ ...prev, selected_cylinders: [], cylinders_status: {} }));
     } catch (error) {
       console.error('Error fetching available cylinders:', error);
       setAvailableCylinders([]);
+    }
+  };
+
+  const fetchAvailableTransfers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('transfers')
+        .select(`
+          *,
+          cylinders (
+            id,
+            serial_number,
+            capacity,
+            current_status,
+            current_location
+          )
+        `)
+        .eq('to_location', 'asignaciones')
+        .eq('is_reversed', false)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAvailableTransfers(data || []);
+    } catch (error) {
+      console.error('Error fetching available transfers:', error);
+      setAvailableTransfers([]);
     }
   };
 
@@ -180,14 +222,21 @@ const Transfers = () => {
     const needsCustomerInfo = (from_location === 'despacho' && to_location === 'asignaciones') ||
                              (from_location === 'asignaciones' && to_location === 'devoluciones');
     
+    const needsTransferNumber = from_location === 'despacho' && to_location === 'asignaciones';
+    const needsTransferList = from_location === 'asignaciones' && to_location === 'devoluciones';
+    const needsStatusEdit = from_location === 'devoluciones' && to_location === 'despacho';
+    
     return {
       needsCustomerInfo,
-      needsDriverInfo: needsCustomerInfo
+      needsDriverInfo: needsCustomerInfo,
+      needsTransferNumber,
+      needsTransferList,
+      needsStatusEdit
     };
   };
 
   const validateForm = () => {
-    const { needsCustomerInfo } = getRequiredFields();
+    const { needsCustomerInfo, needsTransferNumber } = getRequiredFields();
     
     if (!formData.from_location || !formData.to_location || !formData.operator_name) {
       return false;
@@ -198,6 +247,10 @@ const Transfers = () => {
     }
     
     if (needsCustomerInfo && (!formData.customer_name || !formData.delivery_note_number)) {
+      return false;
+    }
+
+    if (needsTransferNumber && !formData.transfer_number) {
       return false;
     }
     
@@ -223,6 +276,7 @@ const Transfers = () => {
         from_location: formData.from_location as any,
         to_location: formData.to_location as any,
         operator_name: formData.operator_name,
+        transfer_number: formData.transfer_number || null,
         observations: formData.observations || null
       }));
 
@@ -250,6 +304,21 @@ const Transfers = () => {
         if (statusError) throw statusError;
       }
 
+      // Si es de devoluciones a despacho, actualizar estados según selección
+      if (formData.from_location === 'devoluciones' && formData.to_location === 'despacho') {
+        const updates = formData.selected_cylinders.map(cylinderId => {
+          const status = formData.cylinders_status[cylinderId] || 'vacio';
+          return supabase
+            .from('cylinders')
+            .update({ current_status: status })
+            .eq('id', cylinderId);
+        });
+
+        const results = await Promise.all(updates);
+        const errors = results.filter(result => result.error);
+        if (errors.length > 0) throw errors[0].error;
+      }
+
       toast({
         title: "Éxito",
         description: `${formData.selected_cylinders.length} traslado(s) registrado(s) correctamente.`,
@@ -263,9 +332,11 @@ const Transfers = () => {
         driver_name: "",
         customer_name: "",
         delivery_note_number: "",
+        transfer_number: "",
         observations: "",
         transfer_date: new Date().toISOString().split('T')[0],
-        selected_cylinders: []
+        selected_cylinders: [],
+        cylinders_status: {}
       });
       setAvailableCylinders([]);
       fetchTransfers();
@@ -299,7 +370,7 @@ const Transfers = () => {
     return matchesSearch && matchesLocation && matchesCapacity;
   });
 
-  const { needsCustomerInfo, needsDriverInfo } = getRequiredFields();
+  const { needsCustomerInfo, needsDriverInfo, needsTransferNumber, needsTransferList, needsStatusEdit } = getRequiredFields();
 
   return (
     <Layout>
@@ -388,6 +459,53 @@ const Transfers = () => {
                   </div>
                 </div>
 
+                {/* Campo de número de traslado para despacho -> asignaciones */}
+                {needsTransferNumber && (
+                  <div className="border p-4 rounded-lg bg-blue-50 border-blue-200">
+                    <h3 className="font-medium mb-3 text-blue-800">Información de Traslado</h3>
+                    <div>
+                      <Label htmlFor="transfer_number">Número de Traslado *</Label>
+                      <Input
+                        id="transfer_number"
+                        value={formData.transfer_number}
+                        onChange={(e) => setFormData(prev => ({ ...prev, transfer_number: e.target.value }))}
+                        placeholder="Ingrese el número de traslado"
+                        required={needsTransferNumber}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Lista de traslados para asignaciones -> devoluciones */}
+                {needsTransferList && (
+                  <div className="border p-4 rounded-lg bg-yellow-50 border-yellow-200">
+                    <h3 className="font-medium mb-3 text-yellow-800">Traslados Disponibles de Asignaciones</h3>
+                    {availableTransfers.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No hay traslados disponibles de asignaciones</p>
+                    ) : (
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {availableTransfers.map((transfer) => (
+                          <div key={transfer.id} className="p-2 border rounded bg-white">
+                            <div className="flex justify-between items-center">
+                              <div className="text-sm">
+                                <span className="font-medium">Cilindro:</span> {transfer.cylinders?.serial_number}
+                                {transfer.transfer_number && (
+                                  <span className="ml-2 text-muted-foreground">
+                                    • Traslado: {transfer.transfer_number}
+                                  </span>
+                                )}
+                              </div>
+                              <Badge variant="outline" className="text-xs">
+                                {new Date(transfer.created_at).toLocaleDateString()}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Conditional Fields for Customer Information */}
                 {needsCustomerInfo && (
                   <div className="border p-4 rounded-lg bg-muted/50">
@@ -434,7 +552,14 @@ const Transfers = () => {
                 {formData.from_location && (
                   <div className="border p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-3">
-                      <h3 className="font-medium">Seleccionar Cilindros</h3>
+                      <h3 className="font-medium">
+                        Seleccionar Cilindros
+                        {formData.from_location === 'estacion_llenado' && formData.to_location === 'despacho' && (
+                          <span className="text-sm font-normal text-blue-600 ml-2">
+                            (Solo cilindros llenos)
+                          </span>
+                        )}
+                      </h3>
                       {availableCylinders.length > 0 && (
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -451,23 +576,55 @@ const Transfers = () => {
                     
                     {availableCylinders.length === 0 ? (
                       <p className="text-sm text-muted-foreground">
-                        No hay cilindros disponibles en la ubicación seleccionada
+                        {formData.from_location === 'estacion_llenado' && formData.to_location === 'despacho' 
+                          ? "No hay cilindros llenos disponibles en la estación de llenado"
+                          : "No hay cilindros disponibles en la ubicación seleccionada"
+                        }
                       </p>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
                         {availableCylinders.map((cylinder) => (
-                          <div key={cylinder.id} className="flex items-center space-x-2 p-2 border rounded">
-                            <Checkbox
-                              id={cylinder.id}
-                              checked={formData.selected_cylinders.includes(cylinder.id)}
-                              onCheckedChange={(checked) => handleCylinderSelection(cylinder.id, checked as boolean)}
-                            />
-                            <Label htmlFor={cylinder.id} className="flex-1 cursor-pointer">
-                              <div className="text-sm font-medium">{cylinder.serial_number}</div>
-                               <div className="text-xs text-muted-foreground">
-                                 {cylinder.capacity} • {cylinder.current_status}
-                               </div>
-                            </Label>
+                          <div key={cylinder.id} className="flex flex-col space-y-2 p-3 border rounded">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id={cylinder.id}
+                                checked={formData.selected_cylinders.includes(cylinder.id)}
+                                onCheckedChange={(checked) => handleCylinderSelection(cylinder.id, checked as boolean)}
+                              />
+                              <Label htmlFor={cylinder.id} className="flex-1 cursor-pointer">
+                                <div className="text-sm font-medium">{cylinder.serial_number}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {cylinder.capacity} • {cylinder.current_status}
+                                </div>
+                              </Label>
+                            </div>
+                            
+                            {/* Editor de estado para devoluciones -> despacho */}
+                            {needsStatusEdit && formData.selected_cylinders.includes(cylinder.id) && (
+                              <div className="mt-2 ml-6">
+                                <Label className="text-xs">Estado del cilindro:</Label>
+                                <Select
+                                  value={formData.cylinders_status[cylinder.id] || 'vacio'}
+                                  onValueChange={(value) => 
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      cylinders_status: {
+                                        ...prev.cylinders_status,
+                                        [cylinder.id]: value
+                                      }
+                                    }))
+                                  }
+                                >
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="vacio">Vacío</SelectItem>
+                                    <SelectItem value="lleno">Lleno</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

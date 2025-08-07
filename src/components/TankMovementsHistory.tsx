@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { History, ArrowUp, ArrowDown, User, Truck } from "lucide-react";
+import { History, ArrowUp, ArrowDown, User, Truck, RotateCcw } from "lucide-react";
+import ReversalDialog from "./ReversalDialog";
 
 interface TankMovement {
   id: string;
@@ -15,11 +17,20 @@ interface TankMovement {
   observations: string | null;
   created_at: string;
   reference_filling_id: string | null;
+  is_reversed: boolean;
+  reversed_at: string | null;
+  reversed_by: string | null;
+  reversal_reason: string | null;
 }
 
 const TankMovementsHistory = () => {
   const [movements, setMovements] = useState<TankMovement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reversalDialog, setReversalDialog] = useState<{
+    open: boolean;
+    recordId: string;
+    description: string;
+  }>({ open: false, recordId: "", description: "" });
 
   useEffect(() => {
     fetchMovements();
@@ -68,8 +79,16 @@ const TankMovementsHistory = () => {
     );
   };
 
-  const getMovementBadge = (type: string) => {
-    return type === 'entrada' ? (
+  const getMovementBadge = (movement: TankMovement) => {
+    if (movement.is_reversed) {
+      return (
+        <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground">
+          Reversado
+        </Badge>
+      );
+    }
+    
+    return movement.movement_type === 'entrada' ? (
       <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
         Entrada
       </Badge>
@@ -78,6 +97,14 @@ const TankMovementsHistory = () => {
         Salida
       </Badge>
     );
+  };
+
+  const handleReverseClick = (movement: TankMovement) => {
+    setReversalDialog({
+      open: true,
+      recordId: movement.id,
+      description: `${movement.movement_type === 'entrada' ? 'Entrada' : 'Salida'} de ${movement.quantity} kg por ${movement.operator_name}`
+    });
   };
 
   if (loading) {
@@ -119,33 +146,44 @@ const TankMovementsHistory = () => {
                 <TableHead>Proveedor/Ref</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Observaciones</TableHead>
+                <TableHead className="w-[100px]">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {movements.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
                     No hay movimientos registrados
                   </TableCell>
                 </TableRow>
               ) : (
                 movements.map((movement) => (
-                  <TableRow key={movement.id}>
+                  <TableRow key={movement.id} className={movement.is_reversed ? "opacity-60" : ""}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getMovementIcon(movement.movement_type)}
-                        {getMovementBadge(movement.movement_type)}
+                        {getMovementBadge(movement)}
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
                       {movement.movement_type === 'entrada' ? '+' : '-'}
                       {movement.quantity.toLocaleString()} kg
+                      {movement.is_reversed && (
+                        <div className="text-xs text-muted-foreground">
+                          Reversado {movement.reversed_at ? new Date(movement.reversed_at).toLocaleDateString() : ''}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <User className="h-3 w-3 text-muted-foreground" />
                         {movement.operator_name}
                       </div>
+                      {movement.is_reversed && movement.reversed_by && (
+                        <div className="text-xs text-muted-foreground">
+                          Reversado por: {movement.reversed_by}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       {movement.movement_type === 'entrada' ? (
@@ -163,7 +201,28 @@ const TankMovementsHistory = () => {
                       {new Date(movement.created_at).toLocaleString()}
                     </TableCell>
                     <TableCell className="text-sm">
-                      {movement.observations || '-'}
+                      {movement.is_reversed && movement.reversal_reason ? (
+                        <div>
+                          <div className="line-through">{movement.observations || '-'}</div>
+                          <div className="text-destructive text-xs mt-1">
+                            Motivo: {movement.reversal_reason}
+                          </div>
+                        </div>
+                      ) : (
+                        movement.observations || '-'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {!movement.is_reversed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleReverseClick(movement)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
@@ -172,6 +231,15 @@ const TankMovementsHistory = () => {
           </Table>
         </ScrollArea>
       </CardContent>
+      
+      <ReversalDialog
+        open={reversalDialog.open}
+        onOpenChange={(open) => setReversalDialog(prev => ({ ...prev, open }))}
+        recordId={reversalDialog.recordId}
+        recordType="tank_movement"
+        recordDescription={reversalDialog.description}
+        onSuccess={fetchMovements}
+      />
     </Card>
   );
 };

@@ -21,9 +21,11 @@ import {
   Truck,
   FileText,
   Package,
-  CheckCircle2
+  CheckCircle2,
+  RotateCcw
 } from "lucide-react";
 import Layout from "@/components/Layout";
+import ReversalDialog from "@/components/ReversalDialog";
 
 interface Cylinder {
   id: string;
@@ -41,6 +43,10 @@ interface Transfer {
   operator_name: string;
   observations: string | null;
   created_at: string;
+  is_reversed?: boolean;
+  reversed_at?: string | null;
+  reversed_by?: string | null;
+  reversal_reason?: string | null;
   cylinders?: Cylinder;
 }
 
@@ -85,6 +91,11 @@ const Transfers = () => {
     transfer_date: new Date().toISOString().split('T')[0],
     selected_cylinders: []
   });
+  const [reversalDialog, setReversalDialog] = useState<{
+    open: boolean;
+    recordId: string;
+    description: string;
+  }>({ open: false, recordId: "", description: "" });
 
   useEffect(() => {
     fetchTransfers();
@@ -710,11 +721,54 @@ const Transfers = () => {
                       <p className="text-sm mt-1">{transfer.observations}</p>
                     </div>
                   )}
+
+                  {/* Reversal Info */}
+                  {transfer.is_reversed && (
+                    <div className="mt-4 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                      <div className="flex items-center gap-2 text-destructive mb-2">
+                        <RotateCcw className="h-4 w-4" />
+                        <span className="text-sm font-medium">Traslado Reversado</span>
+                      </div>
+                      <div className="space-y-1 text-xs text-muted-foreground">
+                        <div>Reversado por: {transfer.reversed_by}</div>
+                        <div>Fecha: {transfer.reversed_at ? new Date(transfer.reversed_at).toLocaleString() : 'N/A'}</div>
+                        {transfer.reversal_reason && <div>Motivo: {transfer.reversal_reason}</div>}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Button */}
+                  {!transfer.is_reversed && (
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReversalDialog({
+                          open: true,
+                          recordId: transfer.id,
+                          description: `Traslado de ${transfer.cylinders?.serial_number || 'N/A'} de ${locationLabels[transfer.from_location as keyof typeof locationLabels]} a ${locationLabels[transfer.to_location as keyof typeof locationLabels]}`
+                        })}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Reversar Traslado
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
+        
+        <ReversalDialog
+          open={reversalDialog.open}
+          onOpenChange={(open) => setReversalDialog(prev => ({ ...prev, open }))}
+          recordId={reversalDialog.recordId}
+          recordType="transfer"
+          recordDescription={reversalDialog.description}
+          onSuccess={fetchTransfers}
+        />
       </div>
     </Layout>
   );

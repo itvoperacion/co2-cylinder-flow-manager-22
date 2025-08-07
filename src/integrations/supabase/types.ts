@@ -104,8 +104,12 @@ export type Database = {
           filling_datetime: string | null
           id: string
           is_approved: boolean | null
+          is_reversed: boolean | null
           observations: string | null
           operator_name: string
+          reversal_reason: string | null
+          reversed_at: string | null
+          reversed_by: string | null
           shrinkage_amount: number | null
           shrinkage_percentage: number | null
           tank_id: string
@@ -120,8 +124,12 @@ export type Database = {
           filling_datetime?: string | null
           id?: string
           is_approved?: boolean | null
+          is_reversed?: boolean | null
           observations?: string | null
           operator_name: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
           shrinkage_amount?: number | null
           shrinkage_percentage?: number | null
           tank_id: string
@@ -136,8 +144,12 @@ export type Database = {
           filling_datetime?: string | null
           id?: string
           is_approved?: boolean | null
+          is_reversed?: boolean | null
           observations?: string | null
           operator_name?: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
           shrinkage_amount?: number | null
           shrinkage_percentage?: number | null
           tank_id?: string
@@ -228,11 +240,15 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_reversed: boolean | null
           movement_type: string
           observations: string | null
           operator_name: string
           quantity: number
           reference_filling_id: string | null
+          reversal_reason: string | null
+          reversed_at: string | null
+          reversed_by: string | null
           shrinkage_amount: number | null
           shrinkage_percentage: number | null
           supplier: string | null
@@ -242,11 +258,15 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_reversed?: boolean | null
           movement_type: string
           observations?: string | null
           operator_name: string
           quantity: number
           reference_filling_id?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
           shrinkage_amount?: number | null
           shrinkage_percentage?: number | null
           supplier?: string | null
@@ -256,11 +276,15 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_reversed?: boolean | null
           movement_type?: string
           observations?: string | null
           operator_name?: string
           quantity?: number
           reference_filling_id?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
           shrinkage_amount?: number | null
           shrinkage_percentage?: number | null
           supplier?: string | null
@@ -323,8 +347,12 @@ export type Database = {
           cylinder_id: string
           from_location: string
           id: string
+          is_reversed: boolean | null
           observations: string | null
           operator_name: string
+          reversal_reason: string | null
+          reversed_at: string | null
+          reversed_by: string | null
           to_location: string
         }
         Insert: {
@@ -332,8 +360,12 @@ export type Database = {
           cylinder_id: string
           from_location: string
           id?: string
+          is_reversed?: boolean | null
           observations?: string | null
           operator_name: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
           to_location: string
         }
         Update: {
@@ -341,8 +373,12 @@ export type Database = {
           cylinder_id?: string
           from_location?: string
           id?: string
+          is_reversed?: boolean | null
           observations?: string | null
           operator_name?: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
           to_location?: string
         }
         Relationships: [
@@ -360,7 +396,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reverse_filling: {
+        Args: {
+          filling_id: string
+          reversed_by: string
+          reversal_reason?: string
+        }
+        Returns: undefined
+      }
+      reverse_tank_movement: {
+        Args: {
+          movement_id: string
+          reversed_by: string
+          reversal_reason?: string
+        }
+        Returns: undefined
+      }
+      reverse_transfer: {
+        Args: {
+          transfer_id: string
+          reversed_by: string
+          reversal_reason?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -24,10 +24,12 @@ import {
   CheckCircle2,
   QrCode,
   ShieldCheck,
-  TrendingDown
+  TrendingDown,
+  RotateCcw
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import BatchFillingManager from "@/components/BatchFillingManager";
+import ReversalDialog from "@/components/ReversalDialog";
 
 interface Cylinder {
   id: string;
@@ -52,6 +54,10 @@ interface Filling {
   approved_by?: string | null;
   shrinkage_percentage?: number;
   shrinkage_amount?: number;
+  is_reversed?: boolean;
+  reversed_at?: string | null;
+  reversed_by?: string | null;
+  reversal_reason?: string | null;
   cylinders?: Cylinder;
 }
 
@@ -76,6 +82,11 @@ const Fillings = () => {
     is_approved: false,
     approved_by: ""
   });
+  const [reversalDialog, setReversalDialog] = useState<{
+    open: boolean;
+    recordId: string;
+    description: string;
+  }>({ open: false, recordId: "", description: "" });
 
   useEffect(() => {
     fetchFillings();
@@ -863,6 +874,40 @@ const Fillings = () => {
                         <p className="text-sm mt-1">{filling.observations}</p>
                       </div>
                     )}
+
+                    {/* Reversal Info */}
+                    {filling.is_reversed && (
+                      <div className="mt-4 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                        <div className="flex items-center gap-2 text-destructive mb-2">
+                          <RotateCcw className="h-4 w-4" />
+                          <span className="text-sm font-medium">Registro Reversado</span>
+                        </div>
+                        <div className="space-y-1 text-xs text-muted-foreground">
+                          <div>Reversado por: {filling.reversed_by}</div>
+                          <div>Fecha: {filling.reversed_at ? new Date(filling.reversed_at).toLocaleString() : 'N/A'}</div>
+                          {filling.reversal_reason && <div>Motivo: {filling.reversal_reason}</div>}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Button */}
+                    {!filling.is_reversed && (
+                      <div className="mt-4 flex justify-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setReversalDialog({
+                            open: true,
+                            recordId: filling.id,
+                            description: `Llenado de ${filling.weight_filled} kg - Cilindro ${filling.cylinders?.serial_number || 'N/A'}`
+                          })}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <RotateCcw className="h-4 w-4 mr-2" />
+                          Reversar Llenado
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -870,6 +915,15 @@ const Fillings = () => {
           })}
         </div>
       )}
+      
+      <ReversalDialog
+        open={reversalDialog.open}
+        onOpenChange={(open) => setReversalDialog(prev => ({ ...prev, open }))}
+        recordId={reversalDialog.recordId}
+        recordType="filling"
+        recordDescription={reversalDialog.description}
+        onSuccess={fetchFillings}
+      />
       </div>
     </Layout>
   );

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Plus,
   Search,
@@ -19,8 +20,10 @@ import {
   Weight,
   AlertCircle,
   CheckCircle,
-  Clock
+  Clock,
+  Printer
 } from "lucide-react";
+import CylinderLabelPrint from "@/components/CylinderLabelPrint";
 
 interface Cylinder {
   id: string;
@@ -36,6 +39,8 @@ interface Cylinder {
   observations: string | null;
   created_at: string;
   updated_at: string;
+  customer_owned: boolean;
+  customer_info: string | null;
 }
 
 import Layout from "@/components/Layout";
@@ -55,7 +60,9 @@ const Cylinders = () => {
     valve_type: "industrial",
     manufacturing_date: "",
     last_hydrostatic_test: "",
-    observations: ""
+    observations: "",
+    customer_owned: false,
+    customer_info: ""
   });
 
   useEffect(() => {
@@ -99,7 +106,9 @@ const Cylinders = () => {
           manufacturing_date: formData.manufacturing_date,
           last_hydrostatic_test: formData.last_hydrostatic_test,
           next_test_due: nextTestDate.toISOString().split('T')[0],
-          observations: formData.observations || null
+          observations: formData.observations || null,
+          customer_owned: formData.customer_owned,
+          customer_info: formData.customer_owned ? formData.customer_info : null
         });
 
       if (error) throw error;
@@ -116,7 +125,9 @@ const Cylinders = () => {
         valve_type: "industrial",
         manufacturing_date: "",
         last_hydrostatic_test: "",
-        observations: ""
+        observations: "",
+        customer_owned: false,
+        customer_info: ""
       });
       fetchCylinders();
     } catch (error) {
@@ -260,6 +271,38 @@ const Cylinders = () => {
                     required
                   />
                 </div>
+                {/* Customer Owned Checkbox */}
+                <div className="col-span-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="customer_owned"
+                      checked={formData.customer_owned}
+                      onCheckedChange={(checked) => setFormData(prev => ({ 
+                        ...prev, 
+                        customer_owned: checked as boolean,
+                        customer_info: checked ? prev.customer_info : ""
+                      }))}
+                    />
+                    <Label htmlFor="customer_owned" className="cursor-pointer">
+                      Cilindro propiedad del cliente
+                    </Label>
+                  </div>
+                </div>
+
+                {/* Customer Info */}
+                {formData.customer_owned && (
+                  <div className="col-span-2">
+                    <Label htmlFor="customer_info">Información del Cliente</Label>
+                    <Input
+                      id="customer_info"
+                      value={formData.customer_info}
+                      onChange={(e) => setFormData(prev => ({ ...prev, customer_info: e.target.value }))}
+                      placeholder="Nombre/Empresa del cliente"
+                      required={formData.customer_owned}
+                    />
+                  </div>
+                )}
+
                 <div className="col-span-2">
                   <Label htmlFor="observations">Observaciones</Label>
                   <Textarea
@@ -449,12 +492,24 @@ const Cylinders = () => {
                   </span>
                 </div>
 
+                {cylinder.customer_owned && (
+                  <div className="border-t pt-3">
+                    <span className="text-xs font-medium text-red-600">Cliente:</span>
+                    <p className="text-sm mt-1">{cylinder.customer_info}</p>
+                  </div>
+                )}
+
                 {cylinder.observations && (
                   <div className="border-t pt-3">
                     <span className="text-xs font-medium text-muted-foreground">Observaciones:</span>
                     <p className="text-sm mt-1">{cylinder.observations}</p>
                   </div>
                 )}
+
+                {/* Action Buttons */}
+                <div className="border-t pt-3">
+                  <CylinderLabelPrint cylinder={cylinder} />
+                </div>
               </CardContent>
             </Card>
           ))}

@@ -53,6 +53,8 @@ export type Database = {
           created_at: string
           current_location: string
           current_status: string
+          customer_info: string | null
+          customer_owned: boolean
           id: string
           is_active: boolean
           last_hydrostatic_test: string
@@ -68,6 +70,8 @@ export type Database = {
           created_at?: string
           current_location?: string
           current_status?: string
+          customer_info?: string | null
+          customer_owned?: boolean
           id?: string
           is_active?: boolean
           last_hydrostatic_test: string
@@ -83,6 +87,8 @@ export type Database = {
           created_at?: string
           current_location?: string
           current_status?: string
+          customer_info?: string | null
+          customer_owned?: boolean
           id?: string
           is_active?: boolean
           last_hydrostatic_test?: string

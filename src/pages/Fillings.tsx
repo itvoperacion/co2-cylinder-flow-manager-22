@@ -30,6 +30,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import BatchFillingManager from "@/components/BatchFillingManager";
 import ReversalDialog from "@/components/ReversalDialog";
+import CustomerCylinderFilling from "@/components/CustomerCylinderFilling";
 
 interface Cylinder {
   id: string;
@@ -331,6 +332,9 @@ const Fillings = () => {
   return (
     <Layout>
       <div className="space-y-6">
+      {/* Customer Cylinder Filling Section */}
+      <CustomerCylinderFilling />
+      
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Llenado de Cilindros</h1>

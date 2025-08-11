@@ -97,6 +97,8 @@ const Transfers = () => {
     cylinders_status: {}
   });
   const [availableTransfers, setAvailableTransfers] = useState<Transfer[]>([]);
+  const [selectedTransfer, setSelectedTransfer] = useState<string>("");
+  const [selectedTransferCylinders, setSelectedTransferCylinders] = useState<Cylinder[]>([]);
   const [reversalDialog, setReversalDialog] = useState<{
     open: boolean;
     recordId: string;
@@ -109,13 +111,19 @@ const Transfers = () => {
 
   useEffect(() => {
     if (formData.from_location) {
-      fetchAvailableCylinders(formData.from_location);
       // Si es de asignaciones a devoluciones, cargar traslados disponibles
       if (formData.from_location === 'asignaciones' && formData.to_location === 'devoluciones') {
         fetchAvailableTransfers();
+        setAvailableCylinders([]);
+        setSelectedTransfer("");
+        setSelectedTransferCylinders([]);
+      } else {
+        fetchAvailableCylinders(formData.from_location);
+        setAvailableTransfers([]);
       }
     } else {
       setAvailableCylinders([]);
+      setAvailableTransfers([]);
     }
   }, [formData.from_location, formData.to_location]);
 
@@ -200,6 +208,50 @@ const Transfers = () => {
     }
   };
 
+  const fetchCylindersFromSelectedTransfer = async (transferNumber: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('transfers')
+        .select(`
+          *,
+          cylinders (
+            id,
+            serial_number,
+            capacity,
+            current_status,
+            current_location
+          )
+        `)
+        .eq('transfer_number', transferNumber)
+        .eq('to_location', 'asignaciones')
+        .eq('is_reversed', false);
+
+      if (error) throw error;
+      
+      // Extraer los cilindros únicos de los traslados
+      const cylinders = data?.map(transfer => transfer.cylinders).filter(Boolean) as Cylinder[];
+      const uniqueCylinders = cylinders.filter((cylinder, index, self) => 
+        cylinder && self.findIndex(c => c && c.id === cylinder.id) === index
+      );
+      
+      setSelectedTransferCylinders(uniqueCylinders);
+      setFormData(prev => ({ ...prev, selected_cylinders: [], cylinders_status: {} }));
+    } catch (error) {
+      console.error('Error fetching cylinders from transfer:', error);
+      setSelectedTransferCylinders([]);
+    }
+  };
+
+  const handleTransferSelection = (transferNumber: string) => {
+    setSelectedTransfer(transferNumber);
+    if (transferNumber) {
+      fetchCylindersFromSelectedTransfer(transferNumber);
+    } else {
+      setSelectedTransferCylinders([]);
+      setFormData(prev => ({ ...prev, selected_cylinders: [], cylinders_status: {} }));
+    }
+  };
+
   const handleCylinderSelection = (cylinderId: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -210,9 +262,13 @@ const Transfers = () => {
   };
 
   const handleSelectAll = (checked: boolean) => {
+    const cylindersToSelect = formData.from_location === 'asignaciones' && formData.to_location === 'devoluciones' 
+      ? selectedTransferCylinders 
+      : availableCylinders;
+      
     setFormData(prev => ({
       ...prev,
-      selected_cylinders: checked ? availableCylinders.map(c => c.id) : []
+      selected_cylinders: checked ? cylindersToSelect.map(c => c.id) : []
     }));
   };
 
@@ -236,7 +292,7 @@ const Transfers = () => {
   };
 
   const validateForm = () => {
-    const { needsCustomerInfo, needsTransferNumber } = getRequiredFields();
+    const { needsCustomerInfo, needsTransferNumber, needsTransferList } = getRequiredFields();
     
     if (!formData.from_location || !formData.to_location || !formData.operator_name) {
       return false;
@@ -251,6 +307,10 @@ const Transfers = () => {
     }
 
     if (needsTransferNumber && !formData.transfer_number) {
+      return false;
+    }
+
+    if (needsTransferList && !selectedTransfer) {
       return false;
     }
     
@@ -479,28 +539,41 @@ const Transfers = () => {
                 {/* Lista de traslados para asignaciones -> devoluciones */}
                 {needsTransferList && (
                   <div className="border p-4 rounded-lg bg-yellow-50 border-yellow-200">
-                    <h3 className="font-medium mb-3 text-yellow-800">Traslados Disponibles de Asignaciones</h3>
-                    {availableTransfers.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No hay traslados disponibles de asignaciones</p>
-                    ) : (
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {availableTransfers.map((transfer) => (
-                          <div key={transfer.id} className="p-2 border rounded bg-white">
-                            <div className="flex justify-between items-center">
-                              <div className="text-sm">
-                                <span className="font-medium">Cilindro:</span> {transfer.cylinders?.serial_number}
-                                {transfer.transfer_number && (
-                                  <span className="ml-2 text-muted-foreground">
-                                    • Traslado: {transfer.transfer_number}
-                                  </span>
-                                )}
+                    <h3 className="font-medium mb-3 text-yellow-800">Seleccionar Traslado de Asignaciones</h3>
+                    <div className="mb-4">
+                      <Label htmlFor="transfer_select">Número de Traslado *</Label>
+                      <Select
+                        value={selectedTransfer}
+                        onValueChange={handleTransferSelection}
+                        required={needsTransferList}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione el número de traslado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from(new Set(availableTransfers.map(t => t.transfer_number).filter(Boolean))).map(transferNumber => (
+                            <SelectItem key={transferNumber} value={transferNumber!}>
+                              Traslado: {transferNumber}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {selectedTransfer && (
+                      <div className="p-3 bg-white rounded border">
+                        <h4 className="text-sm font-medium mb-2">Cilindros en el traslado {selectedTransfer}:</h4>
+                        {selectedTransferCylinders.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">No hay cilindros en este traslado</p>
+                        ) : (
+                          <div className="space-y-1">
+                            {selectedTransferCylinders.map((cylinder) => (
+                              <div key={cylinder.id} className="text-sm">
+                                • {cylinder.serial_number} ({cylinder.capacity})
                               </div>
-                              <Badge variant="outline" className="text-xs">
-                                {new Date(transfer.created_at).toLocaleDateString()}
-                              </Badge>
-                            </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
                   </div>
@@ -549,7 +622,7 @@ const Transfers = () => {
                 )}
 
                 {/* Cylinder Selection */}
-                {formData.from_location && (
+                {(formData.from_location && !needsTransferList) || (needsTransferList && selectedTransfer) ? (
                   <div className="border p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-3">
                       <h3 className="font-medium">
@@ -559,31 +632,43 @@ const Transfers = () => {
                             (Solo cilindros llenos)
                           </span>
                         )}
+                        {needsTransferList && selectedTransfer && (
+                          <span className="text-sm font-normal text-yellow-600 ml-2">
+                            (Del traslado {selectedTransfer})
+                          </span>
+                        )}
                       </h3>
-                      {availableCylinders.length > 0 && (
+                      {((needsTransferList && selectedTransferCylinders.length > 0) || 
+                        (!needsTransferList && availableCylinders.length > 0)) && (
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id="select-all"
-                            checked={formData.selected_cylinders.length === availableCylinders.length}
+                            checked={needsTransferList 
+                              ? formData.selected_cylinders.length === selectedTransferCylinders.length
+                              : formData.selected_cylinders.length === availableCylinders.length
+                            }
                             onCheckedChange={handleSelectAll}
                           />
                           <Label htmlFor="select-all" className="text-sm">
-                            Seleccionar todos ({availableCylinders.length})
+                            Seleccionar todos ({needsTransferList ? selectedTransferCylinders.length : availableCylinders.length})
                           </Label>
                         </div>
                       )}
                     </div>
                     
-                    {availableCylinders.length === 0 ? (
+                    {((needsTransferList && selectedTransferCylinders.length === 0) || 
+                      (!needsTransferList && availableCylinders.length === 0)) ? (
                       <p className="text-sm text-muted-foreground">
-                        {formData.from_location === 'estacion_llenado' && formData.to_location === 'despacho' 
-                          ? "No hay cilindros llenos disponibles en la estación de llenado"
-                          : "No hay cilindros disponibles en la ubicación seleccionada"
+                        {needsTransferList 
+                          ? "Selecciona un número de traslado para ver los cilindros disponibles"
+                          : formData.from_location === 'estacion_llenado' && formData.to_location === 'despacho' 
+                            ? "No hay cilindros llenos disponibles en la estación de llenado"
+                            : "No hay cilindros disponibles en la ubicación seleccionada"
                         }
                       </p>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
-                        {availableCylinders.map((cylinder) => (
+                        {(needsTransferList ? selectedTransferCylinders : availableCylinders).map((cylinder) => (
                           <div key={cylinder.id} className="flex flex-col space-y-2 p-3 border rounded">
                             <div className="flex items-center space-x-2">
                               <Checkbox
@@ -636,6 +721,12 @@ const Transfers = () => {
                         {formData.selected_cylinders.length} cilindro(s) seleccionado(s)
                       </div>
                     )}
+                  </div>
+                ) : formData.from_location && needsTransferList && !selectedTransfer && (
+                  <div className="border p-4 rounded-lg">
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Selecciona un número de traslado para ver los cilindros disponibles
+                    </p>
                   </div>
                 )}
 

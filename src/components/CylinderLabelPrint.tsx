@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Printer, QrCode } from "lucide-react";
+import { Printer } from "lucide-react";
 
 interface Cylinder {
   id: string;
@@ -25,15 +25,6 @@ const CylinderLabelPrint = ({ cylinder }: CylinderLabelPrintProps) => {
     window.print();
   };
 
-  const generateQRData = () => {
-    return JSON.stringify({
-      id: cylinder.id,
-      serial: cylinder.serial_number,
-      capacity: cylinder.capacity,
-      type: cylinder.valve_type
-    });
-  };
-
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -42,77 +33,45 @@ const CylinderLabelPrint = ({ cylinder }: CylinderLabelPrintProps) => {
           Imprimir Etiqueta
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Etiqueta del Cilindro</DialogTitle>
         </DialogHeader>
         
         <div className="print:block">
-          <div className="border-2 border-dashed border-gray-300 p-4 rounded-lg bg-white text-black">
-            {/* Header */}
-            <div className="text-center border-b-2 border-gray-300 pb-2 mb-3">
-              <h2 className="text-lg font-bold">CILINDRO CO2</h2>
-              {cylinder.customer_owned && (
-                <div className="text-sm text-red-600 font-semibold">PROPIEDAD DEL CLIENTE</div>
-              )}
-            </div>
-
-            {/* Main Info */}
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <strong>Serie:</strong>
-                <div className="text-lg font-mono">{cylinder.serial_number}</div>
-              </div>
-              <div>
-                <strong>Capacidad:</strong>
-                <div className="text-lg">{cylinder.capacity}</div>
-              </div>
-              <div>
-                <strong>Válvula:</strong>
-                <div className="capitalize">{cylinder.valve_type}</div>
-              </div>
-              <div>
-                <strong>Estado:</strong>
-                <div className="capitalize">{cylinder.current_status}</div>
-              </div>
-              <div>
-                <strong>Fabricación:</strong>
-                <div>{new Date(cylinder.manufacturing_date).toLocaleDateString()}</div>
-              </div>
-              <div>
-                <strong>Prueba Hidrostática:</strong>
-                <div>
-                  {cylinder.next_test_due 
-                    ? new Date(cylinder.next_test_due).toLocaleDateString()
-                    : 'N/D'
-                  }
+          {/* Label with exact dimensions: 10cm x 5cm (378px x 189px at 96 DPI) */}
+          <div 
+            className="border-2 border-black bg-white text-black print:border-black"
+            style={{ 
+              width: '10cm', 
+              height: '5cm',
+              fontSize: '12px',
+              lineHeight: '1.2',
+              padding: '4mm'
+            }}
+          >
+            {/* Content arranged in compact layout */}
+            <div className="h-full flex flex-col justify-center">
+              {/* Serial Number - Main focus */}
+              <div className="text-center mb-1">
+                <div className="text-lg font-bold font-mono tracking-wider">
+                  {cylinder.serial_number}
                 </div>
               </div>
-            </div>
-
-            {/* Customer Info */}
-            {cylinder.customer_owned && cylinder.customer_info && (
-              <div className="mt-3 pt-2 border-t border-gray-300">
-                <strong className="text-sm">Cliente:</strong>
-                <div className="text-sm">{cylinder.customer_info}</div>
+              
+              {/* CO2 Label */}
+              <div className="text-center mb-1">
+                <div className="text-xl font-bold">
+                  CO2
+                </div>
               </div>
-            )}
-
-            {/* QR Code Placeholder */}
-            <div className="mt-3 pt-2 border-t border-gray-300 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <QrCode className="h-4 w-4" />
-                <span className="text-xs">Código QR</span>
+              
+              {/* Capacity */}
+              <div className="text-center">
+                <div className="text-lg font-semibold">
+                  {cylinder.capacity}
+                </div>
               </div>
-              <div className="border border-gray-400 w-16 h-16 mx-auto flex items-center justify-center text-xs bg-gray-100">
-                QR
-              </div>
-              <div className="text-xs mt-1 break-all">{cylinder.id.slice(0, 8)}...</div>
-            </div>
-
-            {/* Footer */}
-            <div className="text-center text-xs text-gray-600 mt-3 pt-2 border-t border-gray-300">
-              <div>Fecha de impresión: {new Date().toLocaleDateString()}</div>
             </div>
           </div>
         </div>
@@ -126,6 +85,22 @@ const CylinderLabelPrint = ({ cylinder }: CylinderLabelPrintProps) => {
             Imprimir
           </Button>
         </div>
+        
+        {/* Print-specific styles */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @media print {
+              @page {
+                size: 10cm 5cm;
+                margin: 0;
+              }
+              body {
+                margin: 0;
+                padding: 0;
+              }
+            }
+          `
+        }} />
       </DialogContent>
     </Dialog>
   );

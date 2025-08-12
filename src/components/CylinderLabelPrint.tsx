@@ -2,7 +2,6 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Printer } from "lucide-react";
-
 interface Cylinder {
   id: string;
   serial_number: string;
@@ -15,18 +14,16 @@ interface Cylinder {
   customer_owned?: boolean;
   customer_info?: string | null;
 }
-
 interface CylinderLabelPrintProps {
   cylinder: Cylinder;
 }
-
-const CylinderLabelPrint = ({ cylinder }: CylinderLabelPrintProps) => {
+const CylinderLabelPrint = ({
+  cylinder
+}: CylinderLabelPrintProps) => {
   const handlePrint = () => {
     window.print();
   };
-
-  return (
-    <Dialog>
+  return <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="flex items-center gap-1">
           <Printer className="h-4 w-4" />
@@ -40,18 +37,15 @@ const CylinderLabelPrint = ({ cylinder }: CylinderLabelPrintProps) => {
         
         <div className="print:block">
           {/* Label with exact dimensions: 10cm x 5cm (378px x 189px at 96 DPI) */}
-          <div 
-            className="border-2 border-black bg-white text-black print:border-black"
-            style={{ 
-              width: '10cm', 
-              height: '5cm',
-              fontSize: '12px',
-              lineHeight: '1.2',
-              padding: '4mm'
-            }}
-          >
+          <div className="border-2 border-black bg-white text-black print:border-black" style={{
+          width: '10cm',
+          height: '5cm',
+          fontSize: '12px',
+          lineHeight: '1.2',
+          padding: '4mm'
+        }}>
             {/* Content arranged in compact layout */}
-            <div className="h-full flex flex-col justify-center">
+            <div className="h-full flex flex-col justify-center mx-[52px] my-0 py-[4px] px-0">
               {/* Serial Number - Main focus */}
               <div className="text-center mb-1">
                 <div className="text-lg font-bold font-mono tracking-wider">
@@ -88,7 +82,7 @@ const CylinderLabelPrint = ({ cylinder }: CylinderLabelPrintProps) => {
         
         {/* Print-specific styles */}
         <style dangerouslySetInnerHTML={{
-          __html: `
+        __html: `
             @media print {
               @page {
                 size: 10cm 5cm;
@@ -100,10 +94,8 @@ const CylinderLabelPrint = ({ cylinder }: CylinderLabelPrintProps) => {
               }
             }
           `
-        }} />
+      }} />
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
-
 export default CylinderLabelPrint;

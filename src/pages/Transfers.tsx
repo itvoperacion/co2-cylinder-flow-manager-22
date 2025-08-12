@@ -364,6 +364,21 @@ const Transfers = () => {
         if (statusError) throw statusError;
       }
 
+      // Si es de asignaciones a devoluciones, actualizar estados según selección
+      if (formData.from_location === 'asignaciones' && formData.to_location === 'devoluciones') {
+        const updates = formData.selected_cylinders.map(cylinderId => {
+          const status = formData.cylinders_status[cylinderId] || 'vacio';
+          return supabase
+            .from('cylinders')
+            .update({ current_status: status })
+            .eq('id', cylinderId);
+        });
+
+        const results = await Promise.all(updates);
+        const errors = results.filter(result => result.error);
+        if (errors.length > 0) throw errors[0].error;
+      }
+
       // Si es de devoluciones a despacho, actualizar estados según selección
       if (formData.from_location === 'devoluciones' && formData.to_location === 'despacho') {
         const updates = formData.selected_cylinders.map(cylinderId => {
@@ -683,6 +698,33 @@ const Transfers = () => {
                                 </div>
                               </Label>
                             </div>
+                            
+                            {/* Editor de estado para asignaciones -> devoluciones y devoluciones -> despacho */}
+                            {(formData.from_location === 'asignaciones' && formData.to_location === 'devoluciones' && formData.selected_cylinders.includes(cylinder.id)) && (
+                              <div className="mt-2 ml-6">
+                                <Label className="text-xs">Estado del cilindro:</Label>
+                                <Select
+                                  value={formData.cylinders_status[cylinder.id] || 'vacio'}
+                                  onValueChange={(value) => 
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      cylinders_status: {
+                                        ...prev.cylinders_status,
+                                        [cylinder.id]: value
+                                      }
+                                    }))
+                                  }
+                                >
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="vacio">Vacío</SelectItem>
+                                    <SelectItem value="lleno">Lleno</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                             
                             {/* Editor de estado para devoluciones -> despacho */}
                             {needsStatusEdit && formData.selected_cylinders.includes(cylinder.id) && (

@@ -89,47 +89,138 @@ const Reports = () => {
     return option || { label: "Reporte", description: "" };
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     if (!data || data.length === 0) {
       toast.error("No hay datos para exportar");
       return;
     }
 
-    // Transform data for Excel export
-    const transformedData = data.map((item: any) => {
-      const baseData = { ...item };
+    let transformedData;
+
+    // Special handling for tank movements report
+    if (selectedReport === 'tank_movements') {
+      // Get tank stock information
+      const { data: tankData } = await supabase
+        .from('co2_tank')
+        .select('current_level, capacity')
+        .single();
+
+      // Group movements by month
+      const movementsByMonth = new Map();
       
-      // Format dates
-      if (baseData.created_at) {
-        baseData.created_at = format(new Date(baseData.created_at), 'dd/MM/yyyy HH:mm', { locale: es });
-      }
-      if (baseData.updated_at) {
-        baseData.updated_at = format(new Date(baseData.updated_at), 'dd/MM/yyyy HH:mm', { locale: es });
-      }
-      if (baseData.manufacturing_date) {
-        baseData.manufacturing_date = format(new Date(baseData.manufacturing_date), 'dd/MM/yyyy', { locale: es });
-      }
-      if (baseData.last_hydrostatic_test) {
-        baseData.last_hydrostatic_test = format(new Date(baseData.last_hydrostatic_test), 'dd/MM/yyyy', { locale: es });
-      }
-      if (baseData.next_test_due) {
-        baseData.next_test_due = format(new Date(baseData.next_test_due), 'dd/MM/yyyy', { locale: es });
-      }
-      if (baseData.transfer_date) {
-        baseData.transfer_date = format(new Date(baseData.transfer_date), 'dd/MM/yyyy HH:mm', { locale: es });
+      data.forEach((movement: any) => {
+        const monthKey = format(new Date(movement.created_at), 'yyyy-MM');
+        if (!movementsByMonth.has(monthKey)) {
+          movementsByMonth.set(monthKey, []);
+        }
+        movementsByMonth.get(monthKey).push(movement);
+      });
+
+      // Calculate stock at beginning of each month
+      const currentStock = tankData?.current_level || 0;
+      let runningStock = currentStock;
+      
+      // Sort months in descending order and calculate backwards
+      const sortedMonths = Array.from(movementsByMonth.keys()).sort().reverse();
+      const monthlyStocks = new Map();
+      
+      // Calculate stock backwards from current stock
+      for (const monthKey of sortedMonths) {
+        const movements = movementsByMonth.get(monthKey);
+        const monthTotal = movements.reduce((sum: number, movement: any) => {
+          const totalQuantity = movement.quantity + (movement.shrinkage_amount || 0);
+          return movement.movement_type === 'entrada' ? sum - totalQuantity : sum + totalQuantity;
+        }, 0);
+        
+        monthlyStocks.set(monthKey, runningStock - monthTotal);
+        runningStock = runningStock - monthTotal;
       }
 
-      // Flatten nested objects (for fillings and transfers with cylinder data)
-      if (baseData.cylinders) {
-        baseData.serial_number_cilindro = baseData.cylinders.serial_number;
-        baseData.capacidad_cilindro = baseData.cylinders.capacity;
-        baseData.estado_cilindro = baseData.cylinders.current_status;
-        baseData.ubicacion_cilindro = baseData.cylinders.current_location;
-        delete baseData.cylinders;
-      }
+      // Create final data with stock headers
+      transformedData = [];
+      
+      // Sort months chronologically for display
+      const sortedMonthsAsc = Array.from(movementsByMonth.keys()).sort();
+      
+      for (const monthKey of sortedMonthsAsc) {
+        const movements = movementsByMonth.get(monthKey);
+        const stockAtBeginning = monthlyStocks.get(monthKey);
+        
+        // Add month header with stock
+        transformedData.push({
+          id: `STOCK_${monthKey}`,
+          movement_type: `STOCK INICIAL ${format(new Date(monthKey + '-01'), 'MMMM yyyy', { locale: es }).toUpperCase()}`,
+          quantity: stockAtBeginning,
+          tank_id: 'STOCK',
+          operator_name: `${stockAtBeginning} KG DISPONIBLES`,
+          created_at: '',
+          updated_at: '',
+          shrinkage_percentage: '',
+          shrinkage_amount: '',
+          is_reversed: '',
+          reversed_at: '',
+          reversed_by: '',
+          reversal_reason: '',
+          supplier: '',
+          observations: '',
+          reference_filling_id: ''
+        });
 
-      return baseData;
-    });
+        // Add movements for this month
+        movements.forEach((movement: any) => {
+          const baseData = { ...movement };
+          
+          // Format dates
+          if (baseData.created_at) {
+            baseData.created_at = format(new Date(baseData.created_at), 'dd/MM/yyyy HH:mm', { locale: es });
+          }
+          if (baseData.updated_at) {
+            baseData.updated_at = format(new Date(baseData.updated_at), 'dd/MM/yyyy HH:mm', { locale: es });
+          }
+          if (baseData.reversed_at) {
+            baseData.reversed_at = format(new Date(baseData.reversed_at), 'dd/MM/yyyy HH:mm', { locale: es });
+          }
+          
+          transformedData.push(baseData);
+        });
+      }
+    } else {
+      // Standard transformation for other reports
+      transformedData = data.map((item: any) => {
+        const baseData = { ...item };
+        
+        // Format dates
+        if (baseData.created_at) {
+          baseData.created_at = format(new Date(baseData.created_at), 'dd/MM/yyyy HH:mm', { locale: es });
+        }
+        if (baseData.updated_at) {
+          baseData.updated_at = format(new Date(baseData.updated_at), 'dd/MM/yyyy HH:mm', { locale: es });
+        }
+        if (baseData.manufacturing_date) {
+          baseData.manufacturing_date = format(new Date(baseData.manufacturing_date), 'dd/MM/yyyy', { locale: es });
+        }
+        if (baseData.last_hydrostatic_test) {
+          baseData.last_hydrostatic_test = format(new Date(baseData.last_hydrostatic_test), 'dd/MM/yyyy', { locale: es });
+        }
+        if (baseData.next_test_due) {
+          baseData.next_test_due = format(new Date(baseData.next_test_due), 'dd/MM/yyyy', { locale: es });
+        }
+        if (baseData.transfer_date) {
+          baseData.transfer_date = format(new Date(baseData.transfer_date), 'dd/MM/yyyy HH:mm', { locale: es });
+        }
+
+        // Flatten nested objects (for fillings and transfers with cylinder data)
+        if (baseData.cylinders) {
+          baseData.serial_number_cilindro = baseData.cylinders.serial_number;
+          baseData.capacidad_cilindro = baseData.cylinders.capacity;
+          baseData.estado_cilindro = baseData.cylinders.current_status;
+          baseData.ubicacion_cilindro = baseData.cylinders.current_location;
+          delete baseData.cylinders;
+        }
+
+        return baseData;
+      });
+    }
 
     // Create workbook and worksheet
     const wb = XLSX.utils.book_new();

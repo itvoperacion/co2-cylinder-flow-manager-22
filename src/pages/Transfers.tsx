@@ -63,6 +63,7 @@ interface TransferFormData {
   transfer_date: string;
   selected_cylinders: string[];
   cylinders_status: { [key: string]: string };
+  trip_closure: boolean;
 }
 
 const locationLabels = {
@@ -94,7 +95,8 @@ const Transfers = () => {
     observations: "",
     transfer_date: new Date().toISOString().split('T')[0],
     selected_cylinders: [],
-    cylinders_status: {}
+    cylinders_status: {},
+    trip_closure: false
   });
   const [availableTransfers, setAvailableTransfers] = useState<Transfer[]>([]);
   const [selectedTransfer, setSelectedTransfer] = useState<string>("");
@@ -201,7 +203,17 @@ const Transfers = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAvailableTransfers(data || []);
+      
+      // Group by transfer_number and show only one entry per transfer
+      const uniqueTransfers = data?.reduce((acc, transfer) => {
+        const existing = acc.find(t => t.transfer_number === transfer.transfer_number);
+        if (!existing) {
+          acc.push(transfer);
+        }
+        return acc;
+      }, [] as Transfer[]);
+      
+      setAvailableTransfers(uniqueTransfers || []);
     } catch (error) {
       console.error('Error fetching available transfers:', error);
       setAvailableTransfers([]);
@@ -281,13 +293,16 @@ const Transfers = () => {
     const needsTransferNumber = from_location === 'despacho' && to_location === 'asignaciones';
     const needsTransferList = from_location === 'asignaciones' && to_location === 'devoluciones';
     const needsStatusEdit = from_location === 'devoluciones' && to_location === 'despacho';
+    const needsTripClosure = (from_location === 'asignaciones' && to_location === 'devoluciones') ||
+                             (from_location === 'devoluciones' && to_location === 'despacho');
     
     return {
       needsCustomerInfo,
       needsDriverInfo: needsCustomerInfo,
       needsTransferNumber,
       needsTransferList,
-      needsStatusEdit
+      needsStatusEdit,
+      needsTripClosure
     };
   };
 
@@ -394,6 +409,13 @@ const Transfers = () => {
         if (errors.length > 0) throw errors[0].error;
       }
 
+      // Si "Cierre de Viaje" está marcado, remover el transfer_number de disponibles
+      if (formData.trip_closure && selectedTransfer) {
+        setAvailableTransfers(prev => 
+          prev.filter(transfer => transfer.transfer_number !== selectedTransfer)
+        );
+      }
+
       toast({
         title: "Éxito",
         description: `${formData.selected_cylinders.length} traslado(s) registrado(s) correctamente.`,
@@ -411,7 +433,8 @@ const Transfers = () => {
         observations: "",
         transfer_date: new Date().toISOString().split('T')[0],
         selected_cylinders: [],
-        cylinders_status: {}
+        cylinders_status: {},
+        trip_closure: false
       });
       setAvailableCylinders([]);
       fetchTransfers();
@@ -445,7 +468,7 @@ const Transfers = () => {
     return matchesSearch && matchesLocation && matchesCapacity;
   });
 
-  const { needsCustomerInfo, needsDriverInfo, needsTransferNumber, needsTransferList, needsStatusEdit } = getRequiredFields();
+  const { needsCustomerInfo, needsDriverInfo, needsTransferNumber, needsTransferList, needsStatusEdit, needsTripClosure } = getRequiredFields();
 
   return (
     <Layout>
@@ -768,6 +791,27 @@ const Transfers = () => {
                   <div className="border p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground text-center py-4">
                       Selecciona un número de traslado para ver los cilindros disponibles
+                    </p>
+                  </div>
+                )}
+
+                {/* Trip Closure Option */}
+                {needsTripClosure && (
+                  <div className="border p-4 rounded-lg bg-orange-50 border-orange-200">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="trip_closure"
+                        checked={formData.trip_closure}
+                        onCheckedChange={(checked) => 
+                          setFormData(prev => ({ ...prev, trip_closure: checked as boolean }))
+                        }
+                      />
+                      <Label htmlFor="trip_closure" className="text-orange-800 font-medium">
+                        Cierre de Viaje
+                      </Label>
+                    </div>
+                    <p className="text-sm text-orange-700 mt-2 ml-6">
+                      Al marcar esta opción, el traslado será removido de la lista de traslados disponibles.
                     </p>
                   </div>
                 )}

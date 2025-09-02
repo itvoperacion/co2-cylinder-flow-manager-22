@@ -6,18 +6,18 @@ import Layout from "@/components/Layout";
 const Dashboard = () => {
   return <Layout>
       <div className="space-y-8 p-6">
-        {/* Tank Indicator - Mejorado visualmente */}
-        <div className="bg-gradient-to-r from-background to-muted/30 rounded-xl p-6 border border-border/50 shadow-industrial py-0">
+        {/* Tank Indicator - Enhanced contrast */}
+        <div className="bg-card rounded-xl p-6 border-2 border-border shadow-industrial py-0">
           <TankIndicator />
         </div>
 
-        {/* Cylinder Statistics - Mejorado visualmente */}
-        <div className="bg-gradient-to-r from-background to-muted/30 rounded-xl p-6 border border-border/50 shadow-industrial py-0 px-[29px]">
+        {/* Cylinder Statistics - Enhanced contrast */}
+        <div className="bg-card rounded-xl p-6 border-2 border-border shadow-industrial py-0 px-[29px]">
           <CylinderStats />
         </div>
 
-        {/* Reporte de Merma - Indicador detallado */}
-        <div className="bg-gradient-to-r from-background to-muted/30 rounded-xl p-6 border border-border/50 shadow-industrial px-[11px] py-0">
+        {/* Reporte de Merma - Enhanced contrast */}
+        <div className="bg-card rounded-xl p-6 border-2 border-border shadow-industrial px-[11px] py-0">
           <ShrinkageReport />
         </div>
 

@@ -8,12 +8,12 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Industrial color palette optimized for CO2 management application */
-    --background: 216 16% 97%;
-    --foreground: 215 25% 27%;
+    /* Industrial color palette optimized for CO2 management application - Enhanced contrast */
+    --background: 216 20% 94%;
+    --foreground: 215 30% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 27%;
+    --card-foreground: 215 30% 18%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 27%;
@@ -27,9 +27,9 @@ All colors MUST be HSL.
     --secondary: 215 16% 88%;
     --secondary-foreground: 215 25% 27%;
 
-    /* Muted: Light industrial gray */
-    --muted: 215 16% 94%;
-    --muted-foreground: 215 14% 50%;
+    /* Muted: Light industrial gray - Enhanced contrast */
+    --muted: 215 20% 90%;
+    --muted-foreground: 215 20% 40%;
 
     /* Accent: Safety orange for warnings */
     --accent: 25 100% 50%;
@@ -59,8 +59,8 @@ All colors MUST be HSL.
     --gradient-industrial: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
     --gradient-warning: linear-gradient(135deg, hsl(var(--warning)), hsl(25 100% 45%));
 
-    /* Shadows for industrial depth */
-    --shadow-industrial: 0 4px 12px hsl(215 25% 27% / 0.15);
+    /* Shadows for industrial depth - Enhanced contrast */
+    --shadow-industrial: 0 4px 16px hsl(215 30% 20% / 0.25);
     --shadow-tank: 0 8px 24px hsl(210 100% 40% / 0.2);
     --shadow-alert: 0 4px 16px hsl(var(--warning) / 0.3);
 

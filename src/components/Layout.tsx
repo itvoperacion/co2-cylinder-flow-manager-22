@@ -99,7 +99,13 @@ const Layout = ({
             </div>
             
             <div className="flex items-center space-x-4">
-              <Navigation unreadAlertsCount={unreadAlertsCount} onRefresh={handleRefresh} refreshing={refreshing} />
+              <Navigation 
+                unreadAlertsCount={unreadAlertsCount} 
+                alerts={alerts}
+                onRefresh={handleRefresh} 
+                onAlertsChange={fetchAlerts}
+                refreshing={refreshing} 
+              />
               
               <Button variant="outline" onClick={handleSignOut}>
                 Cerrar Sesión

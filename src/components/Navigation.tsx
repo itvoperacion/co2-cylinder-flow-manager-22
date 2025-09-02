@@ -1,13 +1,13 @@
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import AlertsDialog from "./AlertsDialog";
 import { 
   LayoutDashboard,
   Package,
   Droplets,
   ArrowRightLeft,
   FileSpreadsheet,
-  Bell,
   RefreshCw,
   Gauge
 } from "lucide-react";
@@ -15,11 +15,13 @@ import {
 interface NavigationProps {
   className?: string;
   unreadAlertsCount?: number;
+  alerts?: any[];
   onRefresh?: () => void;
+  onAlertsChange?: () => void;
   refreshing?: boolean;
 }
 
-const Navigation = ({ className, unreadAlertsCount, onRefresh, refreshing }: NavigationProps) => {
+const Navigation = ({ className, unreadAlertsCount, alerts = [], onRefresh, onAlertsChange, refreshing }: NavigationProps) => {
   const navItems = [
     {
       to: "/",
@@ -89,15 +91,11 @@ const Navigation = ({ className, unreadAlertsCount, onRefresh, refreshing }: Nav
           </Button>
         )}
         
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
-          <Bell className="h-4 w-4" />
-          Alertas
-          {unreadAlertsCount && unreadAlertsCount > 0 && (
-            <span className="bg-destructive text-destructive-foreground text-xs rounded-full px-1.5 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center">
-              {unreadAlertsCount}
-            </span>
-          )}
-        </Button>
+        <AlertsDialog 
+          alerts={alerts} 
+          unreadCount={unreadAlertsCount || 0}
+          onAlertsChange={onAlertsChange || (() => {})}
+        />
       </div>
     </nav>
   );

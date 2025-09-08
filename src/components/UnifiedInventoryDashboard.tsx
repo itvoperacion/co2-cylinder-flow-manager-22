@@ -38,7 +38,19 @@ const UnifiedInventoryDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchInventory();
+    // Ensure user has a role before fetching data
+    const initializeData = async () => {
+      try {
+        // Call function to ensure user has a role
+        await supabase.rpc('ensure_user_has_role');
+        await fetchInventory();
+      } catch (error) {
+        console.error('Error initializing data:', error);
+        setLoading(false);
+      }
+    };
+
+    initializeData();
     
     // Set up real-time subscription
     const channel = supabase
@@ -153,6 +165,10 @@ const UnifiedInventoryDashboard = () => {
         return <Truck className="h-5 w-5 text-accent" />;
       case 'almacen':
         return <Warehouse className="h-5 w-5 text-muted-foreground" />;
+      case 'asignaciones':
+        return <Package className="h-5 w-5 text-blue-600" />;
+      case 'en_mantenimiento':
+        return <Activity className="h-5 w-5 text-orange-600" />;
       default:
         return <MapPin className="h-5 w-5 text-muted-foreground" />;
     }
@@ -168,8 +184,12 @@ const UnifiedInventoryDashboard = () => {
         return 'En Transporte';
       case 'almacen':
         return 'Almacén';
+      case 'asignaciones':
+        return 'Asignaciones';
+      case 'en_mantenimiento':
+        return 'En Mantenimiento';
       default:
-        return location.charAt(0).toUpperCase() + location.slice(1);
+        return location.charAt(0).toUpperCase() + location.slice(1).replace('_', ' ');
     }
   };
 

@@ -89,6 +89,122 @@ const Reports = () => {
     return option || { label: "Reporte", description: "" };
   };
 
+  const exportAllReports = async () => {
+    const reportTypes: ReportType[] = ["cylinders", "fillings", "transfers", "tank_movements", "shrinkage"];
+    
+    try {
+      const wb = XLSX.utils.book_new();
+      
+      for (const reportType of reportTypes) {
+        // Fetch data for each report type
+        let query;
+        let reportData;
+        
+        if (reportType === 'shrinkage') {
+          const [fillingsData, tankMovementsData] = await Promise.all([
+            supabase.from('fillings').select('*, cylinders(serial_number, capacity)'),
+            supabase.from('tank_movements').select('*')
+          ]);
+          
+          const combinedData = [
+            ...(fillingsData.data || []).map(f => ({
+              ...f,
+              source_type: 'cylinder_filling',
+              description: `Llenado cilindro ${f.cylinders?.serial_number} (${f.cylinders?.capacity})`,
+              shrinkage_kg: f.shrinkage_amount || 0
+            })),
+            ...(tankMovementsData.data || []).map(t => ({
+              ...t,
+              source_type: 'tank_movement',
+              description: `Movimiento tanque - ${t.movement_type}`,
+              shrinkage_kg: t.shrinkage_amount || 0
+            }))
+          ];
+          
+          reportData = combinedData.filter(item => item.shrinkage_kg > 0);
+        } else {
+          if (reportType === 'fillings') {
+            query = supabase.from('fillings').select('*, cylinders(serial_number, capacity, current_status)');
+          } else if (reportType === 'transfers') {
+            query = supabase.from('transfers').select('*, cylinders(serial_number, capacity, current_status, current_location)');
+          } else {
+            query = supabase.from(reportType).select('*');
+          }
+          
+          // Add date filtering if dates are selected
+          if (dateFrom && dateTo) {
+            const fromDate = format(dateFrom, 'yyyy-MM-dd');
+            const toDate = format(dateTo, 'yyyy-MM-dd');
+            query = query.gte('created_at', fromDate).lte('created_at', toDate + 'T23:59:59');
+          }
+
+          const { data: fetchedData, error } = await query.order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          reportData = fetchedData;
+        }
+        
+        if (!reportData || reportData.length === 0) continue;
+        
+        // Transform data for this report
+        const transformedData = reportData.map((item: any) => {
+          const baseData = { ...item };
+          
+          // Format dates
+          if (baseData.created_at) {
+            baseData.created_at = format(new Date(baseData.created_at), 'dd/MM/yyyy HH:mm', { locale: es });
+          }
+          if (baseData.updated_at) {
+            baseData.updated_at = format(new Date(baseData.updated_at), 'dd/MM/yyyy HH:mm', { locale: es });
+          }
+          if (baseData.manufacturing_date) {
+            baseData.manufacturing_date = format(new Date(baseData.manufacturing_date), 'dd/MM/yyyy', { locale: es });
+          }
+          if (baseData.last_hydrostatic_test) {
+            baseData.last_hydrostatic_test = format(new Date(baseData.last_hydrostatic_test), 'dd/MM/yyyy', { locale: es });
+          }
+          if (baseData.next_test_due) {
+            baseData.next_test_due = format(new Date(baseData.next_test_due), 'dd/MM/yyyy', { locale: es });
+          }
+          if (baseData.transfer_date) {
+            baseData.transfer_date = format(new Date(baseData.transfer_date), 'dd/MM/yyyy HH:mm', { locale: es });
+          }
+
+          // Flatten nested objects
+          if (baseData.cylinders) {
+            baseData.serial_number_cilindro = baseData.cylinders.serial_number;
+            baseData.capacidad_cilindro = baseData.cylinders.capacity;
+            baseData.estado_cilindro = baseData.cylinders.current_status;
+            baseData.ubicacion_cilindro = baseData.cylinders.current_location;
+            delete baseData.cylinders;
+          }
+
+          return baseData;
+        });
+        
+        // Create worksheet for this report
+        const ws = XLSX.utils.json_to_sheet(transformedData);
+        const reportInfo = getReportInfo(reportType);
+        XLSX.utils.book_append_sheet(wb, ws, reportInfo.label);
+      }
+      
+      // Generate filename
+      const dateRange = dateFrom && dateTo 
+        ? `_${format(dateFrom, 'yyyy-MM-dd')}_a_${format(dateTo, 'yyyy-MM-dd')}`
+        : `_${format(new Date(), 'yyyy-MM-dd')}`;
+      
+      const filename = `reporte_completo${dateRange}.xlsx`;
+
+      // Save the file
+      XLSX.writeFile(wb, filename);
+      
+      toast.success(`Reporte completo exportado como ${filename}`);
+    } catch (error) {
+      console.error('Error exporting all reports:', error);
+      toast.error("Error al exportar el reporte completo");
+    }
+  };
+
   const exportToExcel = async () => {
     if (!data || data.length === 0) {
       toast.error("No hay datos para exportar");
@@ -350,14 +466,26 @@ const Reports = () => {
                 )}
               </div>
               
-              <Button
-                onClick={exportToExcel}
-                disabled={isLoading || !data || data.length === 0}
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                {isLoading ? "Cargando..." : "Descargar Excel"}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={exportAllReports}
+                  disabled={isLoading}
+                  className="flex items-center gap-2"
+                  variant="default"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  {isLoading ? "Cargando..." : "Descargar Todos"}
+                </Button>
+                <Button
+                  onClick={exportToExcel}
+                  disabled={isLoading || !data || data.length === 0}
+                  className="flex items-center gap-2"
+                  variant="outline"
+                >
+                  <Download className="h-4 w-4" />
+                  {isLoading ? "Cargando..." : "Descargar Individual"}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

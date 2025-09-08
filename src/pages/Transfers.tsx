@@ -200,6 +200,7 @@ const Transfers = () => {
         `)
         .eq('to_location', 'asignaciones')
         .eq('is_reversed', false)
+        .eq('trip_closure', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -409,8 +410,16 @@ const Transfers = () => {
         if (errors.length > 0) throw errors[0].error;
       }
 
-      // Si "Cierre de Viaje" está marcado, remover el transfer_number de disponibles
+      // Si "Cierre de Viaje" está marcado, actualizar todos los traslados del transfer_number seleccionado
       if (formData.trip_closure && selectedTransfer) {
+        const { error: tripClosureError } = await supabase
+          .from('transfers')
+          .update({ trip_closure: true })
+          .eq('transfer_number', selectedTransfer);
+
+        if (tripClosureError) throw tripClosureError;
+        
+        // Remover de la lista local también
         setAvailableTransfers(prev => 
           prev.filter(transfer => transfer.transfer_number !== selectedTransfer)
         );

@@ -56,7 +56,7 @@ const ClientManagement = () => {
   
   // Transfer state
   const [fromLocation, setFromLocation] = useState<'asignaciones' | 'clientes'>('asignaciones');
-  const [toLocation, setToLocation] = useState<'clientes' | 'despacho'>('clientes');
+  const [toLocation, setToLocation] = useState<'clientes' | 'despacho' | 'devoluciones'>('clientes');
   const [selectedCylinders, setSelectedCylinders] = useState<string[]>([]);
 
   useEffect(() => {
@@ -181,7 +181,7 @@ const ClientManagement = () => {
     try {
       let updateData: any = { current_location: toLocation };
       
-      if (toLocation === 'despacho') {
+      if (toLocation === 'despacho' || toLocation === 'devoluciones') {
         updateData.customer_info = null;
       }
 
@@ -373,13 +373,14 @@ const ClientManagement = () => {
                     </div>
                     <div className="space-y-2">
                       <Label>Destino</Label>
-                      <Select value={toLocation} onValueChange={(value: 'clientes' | 'despacho') => setToLocation(value)}>
+                      <Select value={toLocation} onValueChange={(value: 'clientes' | 'despacho' | 'devoluciones') => setToLocation(value)}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="clientes">Clientes</SelectItem>
                           <SelectItem value="despacho">Despacho</SelectItem>
+                          <SelectItem value="devoluciones">Devoluciones</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

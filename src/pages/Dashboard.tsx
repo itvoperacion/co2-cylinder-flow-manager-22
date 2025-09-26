@@ -2,6 +2,7 @@ import TankIndicator from "@/components/TankIndicator";
 import CylinderStats from "@/components/CylinderStats";
 import UnifiedInventoryDashboard from "@/components/UnifiedInventoryDashboard";
 import ShrinkageReport from "@/components/ShrinkageReport";
+import ClientManagement from "@/components/ClientManagement";
 import Layout from "@/components/Layout";
 const Dashboard = () => {
   return <Layout>
@@ -23,6 +24,9 @@ const Dashboard = () => {
 
         {/* Inventario Unificado - Componente principal */}
         <UnifiedInventoryDashboard />
+        
+        {/* Gestión de Clientes */}
+        <ClientManagement />
       </div>
     </Layout>;
 };

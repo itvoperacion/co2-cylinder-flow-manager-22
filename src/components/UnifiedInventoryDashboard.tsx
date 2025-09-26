@@ -169,6 +169,8 @@ const UnifiedInventoryDashboard = () => {
         return <Package className="h-5 w-5 text-blue-600" />;
       case 'en_mantenimiento':
         return <Activity className="h-5 w-5 text-orange-600" />;
+      case 'clientes':
+        return <Building className="h-5 w-5 text-green-600" />;
       default:
         return <MapPin className="h-5 w-5 text-muted-foreground" />;
     }
@@ -188,6 +190,8 @@ const UnifiedInventoryDashboard = () => {
         return 'Asignaciones';
       case 'en_mantenimiento':
         return 'En Mantenimiento';
+      case 'clientes':
+        return 'Clientes';
       default:
         return location.charAt(0).toUpperCase() + location.slice(1).replace('_', ' ');
     }

@@ -118,7 +118,7 @@ const CylinderStats = () => {
         return <Settings className="h-4 w-4 text-warning" />;
       case 'fuera_de_servicio':
         return <AlertTriangle className="h-4 w-4 text-destructive" />;
-      case 'asignaciones':
+      case 'rutas':
         return <MapPin className="h-4 w-4 text-accent" />;
       case 'devoluciones':
         return <Undo className="h-4 w-4 text-secondary-foreground" />;
@@ -136,8 +136,8 @@ const CylinderStats = () => {
         return 'En Mantenimiento';
       case 'fuera_de_servicio':
         return 'Fuera de Servicio';
-      case 'asignaciones':
-        return 'Asignaciones';
+      case 'rutas':
+        return 'Rutas';
       case 'devoluciones':
         return 'Devoluciones';
       default:

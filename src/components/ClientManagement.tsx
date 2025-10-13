@@ -44,7 +44,7 @@ const ClientManagement = () => {
   const [observations, setObservations] = useState("");
 
   // Transfer state
-  const [fromLocation, setFromLocation] = useState<'asignaciones' | 'clientes'>('asignaciones');
+  const [fromLocation, setFromLocation] = useState<'rutas' | 'clientes'>('rutas');
   const [toLocation, setToLocation] = useState<'clientes' | 'despacho' | 'devoluciones'>('clientes');
   const [selectedCylinders, setSelectedCylinders] = useState<string[]>([]);
   useEffect(() => {
@@ -52,11 +52,11 @@ const ClientManagement = () => {
   }, []);
   const fetchData = async () => {
     try {
-      // Fetch cylinders from "asignaciones" for transfers
+      // Fetch cylinders from "rutas" for transfers
       const {
         data: cylinders,
         error: cylindersError
-      } = await supabase.from('cylinders').select('*').in('current_location', ['asignaciones', 'clientes']).eq('is_active', true);
+      } = await supabase.from('cylinders').select('*').in('current_location', ['rutas', 'clientes']).eq('is_active', true);
       if (cylindersError) throw cylindersError;
       setAvailableCylinders(cylinders || []);
 
@@ -98,14 +98,14 @@ const ClientManagement = () => {
       return;
     }
     try {
-      // Get cylinders from "asignaciones" location with the selected capacity and status
+      // Get cylinders from "rutas" location with the selected capacity and status
       const {
         data: availableCyls,
         error: fetchError
-      } = await supabase.from('cylinders').select('id').eq('current_location', 'asignaciones').eq('capacity', selectedCapacity).eq('current_status', condition).eq('is_active', true).limit(cylinderCount);
+      } = await supabase.from('cylinders').select('id').eq('current_location', 'rutas').eq('capacity', selectedCapacity).eq('current_status', condition).eq('is_active', true).limit(cylinderCount);
       if (fetchError) throw fetchError;
       if (!availableCyls || availableCyls.length < cylinderCount) {
-        toast.error(`No hay suficientes cilindros ${condition}s de ${selectedCapacity} en asignaciones`);
+        toast.error(`No hay suficientes cilindros ${condition}s de ${selectedCapacity} en rutas`);
         return;
       }
 
@@ -123,7 +123,7 @@ const ClientManagement = () => {
       // Create transfer records
       const transferPromises = cylinderIds.map(cylinderId => supabase.from('transfers').insert({
         cylinder_id: cylinderId,
-        from_location: 'asignaciones',
+        from_location: 'rutas',
         to_location: 'clientes',
         operator_name: 'Sistema',
         observations: `Asignado a cliente: ${clientName}`
@@ -182,7 +182,7 @@ const ClientManagement = () => {
     setObservations("");
   };
   const uniqueCapacities = [...new Set(availableCylinders.map(c => c.capacity))];
-  const cylindersFromAssignments = availableCylinders.filter(c => c.current_location === 'asignaciones');
+  const cylindersFromAssignments = availableCylinders.filter(c => c.current_location === 'rutas');
   const cylindersFromClients = availableCylinders.filter(c => c.current_location === 'clientes');
   if (loading) {
     return <Card>

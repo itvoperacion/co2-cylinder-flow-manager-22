@@ -165,7 +165,7 @@ const UnifiedInventoryDashboard = () => {
         return <Truck className="h-5 w-5 text-accent" />;
       case 'almacen':
         return <Warehouse className="h-5 w-5 text-muted-foreground" />;
-      case 'asignaciones':
+      case 'rutas':
         return <Package className="h-5 w-5 text-blue-600" />;
       case 'en_mantenimiento':
         return <Activity className="h-5 w-5 text-orange-600" />;
@@ -186,8 +186,8 @@ const UnifiedInventoryDashboard = () => {
         return 'En Transporte';
       case 'almacen':
         return 'Almacén';
-      case 'asignaciones':
-        return 'Asignaciones';
+      case 'rutas':
+        return 'Rutas';
       case 'en_mantenimiento':
         return 'En Mantenimiento';
       case 'clientes':

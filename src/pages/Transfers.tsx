@@ -69,7 +69,7 @@ interface TransferFormData {
 const locationLabels = {
   'despacho': 'Despacho',
   'estacion_llenado': 'Estación de Llenado',
-  'asignaciones': 'Asignaciones',
+  'rutas': 'Rutas',
   'clientes': 'Clientes',
   'devoluciones': 'Devoluciones',
   'en_mantenimiento': 'Mantenimiento',
@@ -114,9 +114,9 @@ const Transfers = () => {
 
   useEffect(() => {
     if (formData.from_location) {
-      // Si es de asignaciones a clientes o de asignaciones a devoluciones, cargar traslados disponibles
-      if ((formData.from_location === 'asignaciones' && formData.to_location === 'clientes') ||
-          (formData.from_location === 'asignaciones' && formData.to_location === 'devoluciones') ||
+      // Si es de rutas a clientes o de rutas a devoluciones, cargar traslados disponibles
+      if ((formData.from_location === 'rutas' && formData.to_location === 'clientes') ||
+          (formData.from_location === 'rutas' && formData.to_location === 'devoluciones') ||
           (formData.from_location === 'clientes' && formData.to_location === 'devoluciones')) {
         fetchAvailableTransfers();
         setAvailableCylinders([]);
@@ -201,7 +201,7 @@ const Transfers = () => {
             current_location
           )
         `)
-        .eq('to_location', 'asignaciones')
+        .eq('to_location', 'rutas')
         .eq('is_reversed', false)
         .eq('trip_closure', false)
         .order('created_at', { ascending: false });
@@ -239,7 +239,7 @@ const Transfers = () => {
           )
         `)
         .eq('transfer_number', transferNumber)
-        .eq('to_location', 'asignaciones')
+        .eq('to_location', 'rutas')
         .eq('is_reversed', false);
 
       if (error) throw error;
@@ -278,7 +278,7 @@ const Transfers = () => {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    const cylindersToSelect = formData.from_location === 'asignaciones' && formData.to_location === 'devoluciones' 
+    const cylindersToSelect = formData.from_location === 'rutas' && formData.to_location === 'devoluciones' 
       ? selectedTransferCylinders 
       : availableCylinders;
       
@@ -291,17 +291,17 @@ const Transfers = () => {
   const getRequiredFields = () => {
     const { from_location, to_location } = formData;
     
-    const needsCustomerInfo = (from_location === 'despacho' && to_location === 'asignaciones') ||
-                             (from_location === 'asignaciones' && to_location === 'devoluciones') ||
-                             (from_location === 'asignaciones' && to_location === 'clientes') ||
+    const needsCustomerInfo = (from_location === 'despacho' && to_location === 'rutas') ||
+                             (from_location === 'rutas' && to_location === 'devoluciones') ||
+                             (from_location === 'rutas' && to_location === 'clientes') ||
                              (from_location === 'clientes' && to_location === 'devoluciones');
     
-    const needsTransferNumber = from_location === 'despacho' && to_location === 'asignaciones';
-    const needsTransferList = (from_location === 'asignaciones' && to_location === 'devoluciones') ||
-                              (from_location === 'asignaciones' && to_location === 'clientes') ||
+    const needsTransferNumber = from_location === 'despacho' && to_location === 'rutas';
+    const needsTransferList = (from_location === 'rutas' && to_location === 'devoluciones') ||
+                              (from_location === 'rutas' && to_location === 'clientes') ||
                               (from_location === 'clientes' && to_location === 'devoluciones');
     const needsStatusEdit = from_location === 'devoluciones' && to_location === 'despacho';
-    const needsTripClosure = (from_location === 'asignaciones' && to_location === 'devoluciones') ||
+    const needsTripClosure = (from_location === 'rutas' && to_location === 'devoluciones') ||
                              (from_location === 'devoluciones' && to_location === 'despacho') ||
                              (from_location === 'clientes' && to_location === 'devoluciones');
     
@@ -388,8 +388,8 @@ const Transfers = () => {
         if (statusError) throw statusError;
       }
 
-      // Si es de asignaciones a devoluciones, actualizar estados según selección
-      if (formData.from_location === 'asignaciones' && formData.to_location === 'devoluciones') {
+      // Si es de rutas a devoluciones, actualizar estados según selección
+      if (formData.from_location === 'rutas' && formData.to_location === 'devoluciones') {
         const updates = formData.selected_cylinders.map(cylinderId => {
           const status = formData.cylinders_status[cylinderId] || 'vacio';
           return supabase
@@ -523,7 +523,7 @@ const Transfers = () => {
                       <SelectContent>
                         <SelectItem value="despacho">Despacho</SelectItem>
                         <SelectItem value="estacion_llenado">Estación de Llenado</SelectItem>
-                        <SelectItem value="asignaciones">Asignaciones</SelectItem>
+                        <SelectItem value="rutas">Rutas</SelectItem>
                         <SelectItem value="clientes">Clientes</SelectItem>
                         <SelectItem value="devoluciones">Devoluciones</SelectItem>
                         <SelectItem value="en_mantenimiento">Mantenimiento</SelectItem>
@@ -543,7 +543,7 @@ const Transfers = () => {
                       <SelectContent>
                         <SelectItem value="despacho">Despacho</SelectItem>
                         <SelectItem value="estacion_llenado">Estación de Llenado</SelectItem>
-                        <SelectItem value="asignaciones">Asignaciones</SelectItem>
+                        <SelectItem value="rutas">Rutas</SelectItem>
                         <SelectItem value="clientes">Clientes</SelectItem>
                         <SelectItem value="devoluciones">Devoluciones</SelectItem>
                         <SelectItem value="en_mantenimiento">Mantenimiento</SelectItem>
@@ -576,7 +576,7 @@ const Transfers = () => {
                   </div>
                 </div>
 
-                {/* Campo de número de traslado para despacho -> asignaciones */}
+                {/* Campo de número de traslado para despacho -> rutas */}
                 {needsTransferNumber && (
                   <div className="border p-4 rounded-lg bg-blue-50 border-blue-200">
                     <h3 className="font-medium mb-3 text-blue-800">Información de Traslado</h3>
@@ -593,12 +593,12 @@ const Transfers = () => {
                   </div>
                 )}
 
-                {/* Lista de traslados para asignaciones -> clientes/devoluciones o clientes -> devoluciones */}
+                {/* Lista de traslados para rutas -> clientes/devoluciones o clientes -> devoluciones */}
                 {needsTransferList && (
                   <div className="border p-4 rounded-lg bg-yellow-50 border-yellow-200">
                     <h3 className="font-medium mb-3 text-yellow-800">
-                      {formData.from_location === 'asignaciones' 
-                        ? 'Seleccionar Traslado de Asignaciones' 
+                      {formData.from_location === 'rutas' 
+                        ? 'Seleccionar Traslado de Rutas' 
                         : 'Seleccionar Traslado de Clientes'}
                     </h3>
                     <div className="mb-4">
@@ -656,7 +656,7 @@ const Transfers = () => {
                       </div>
                       <div>
                         <Label htmlFor="delivery_note_number">
-                          {formData.to_location === 'asignaciones' ? 'Nro. Nota de Entrega' : 
+                          {formData.to_location === 'rutas' ? 'Nro. Nota de Entrega' : 
                            formData.to_location === 'clientes' ? 'Nro. Nota de Entrega' :
                            'Nro. Nota de Devolución'} *
                         </Label>
@@ -747,8 +747,8 @@ const Transfers = () => {
                               </Label>
                             </div>
                             
-                            {/* Editor de estado para asignaciones -> devoluciones y devoluciones -> despacho */}
-                            {(formData.from_location === 'asignaciones' && formData.to_location === 'devoluciones' && formData.selected_cylinders.includes(cylinder.id)) && (
+                            {/* Editor de estado para rutas -> devoluciones y devoluciones -> despacho */}
+                            {(formData.from_location === 'rutas' && formData.to_location === 'devoluciones' && formData.selected_cylinders.includes(cylinder.id)) && (
                               <div className="mt-2 ml-6">
                                 <Label className="text-xs">Estado del cilindro:</Label>
                                 <Select
@@ -943,7 +943,7 @@ const Transfers = () => {
                       <SelectItem value="all">Todas</SelectItem>
                       <SelectItem value="despacho">Despacho</SelectItem>
                       <SelectItem value="estacion_llenado">Estación de Llenado</SelectItem>
-                      <SelectItem value="asignaciones">Asignaciones</SelectItem>
+                      <SelectItem value="rutas">Rutas</SelectItem>
                       <SelectItem value="devoluciones">Devoluciones</SelectItem>
                       <SelectItem value="en_mantenimiento">Mantenimiento</SelectItem>
                       <SelectItem value="fuera_de_servicio">Fuera de Servicio</SelectItem>

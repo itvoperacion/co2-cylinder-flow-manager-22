@@ -13,9 +13,7 @@ const Dashboard = () => {
         </div>
 
         {/* Cylinder Statistics - Enhanced contrast */}
-        <div className="bg-card rounded-xl p-6 border-2 border-border shadow-industrial py-0 px-[29px]">
-          <CylinderStats />
-        </div>
+        
 
         {/* Reporte de Merma - Enhanced contrast */}
         <div className="bg-card rounded-xl p-6 border-2 border-border shadow-industrial px-[11px] py-0">

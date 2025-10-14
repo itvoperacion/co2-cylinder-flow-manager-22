@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_logs: {
+        Row: {
+          action: string
+          comments: string | null
+          created_at: string | null
+          id: string
+          new_data: Json | null
+          performed_by: string
+          previous_data: Json | null
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          action: string
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          performed_by: string
+          previous_data?: Json | null
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          action?: string
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          performed_by?: string
+          previous_data?: Json | null
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
       co2_tank: {
         Row: {
           capacity: number
@@ -49,6 +85,8 @@ export type Database = {
       }
       cylinders: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           capacity: string
           created_at: string
           current_location: string
@@ -61,11 +99,14 @@ export type Database = {
           manufacturing_date: string
           next_test_due: string
           observations: string | null
+          requires_approval: boolean | null
           serial_number: string
           updated_at: string
           valve_type: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           capacity: string
           created_at?: string
           current_location?: string
@@ -78,11 +119,14 @@ export type Database = {
           manufacturing_date: string
           next_test_due: string
           observations?: string | null
+          requires_approval?: boolean | null
           serial_number: string
           updated_at?: string
           valve_type: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           capacity?: string
           created_at?: string
           current_location?: string
@@ -95,6 +139,7 @@ export type Database = {
           manufacturing_date?: string
           next_test_due?: string
           observations?: string | null
+          requires_approval?: boolean | null
           serial_number?: string
           updated_at?: string
           valve_type?: string
@@ -103,6 +148,7 @@ export type Database = {
       }
       fillings: {
         Row: {
+          approved_at: string | null
           approved_by: string | null
           batch_number: string | null
           created_at: string
@@ -123,6 +169,7 @@ export type Database = {
           weight_filled: number
         }
         Insert: {
+          approved_at?: string | null
           approved_by?: string | null
           batch_number?: string | null
           created_at?: string
@@ -143,6 +190,7 @@ export type Database = {
           weight_filled: number
         }
         Update: {
+          approved_at?: string | null
           approved_by?: string | null
           batch_number?: string | null
           created_at?: string
@@ -244,14 +292,18 @@ export type Database = {
       }
       tank_movements: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           id: string
+          is_approved: boolean | null
           is_reversed: boolean | null
           movement_type: string
           observations: string | null
           operator_name: string
           quantity: number
           reference_filling_id: string | null
+          rejection_reason: string | null
           reversal_reason: string | null
           reversed_at: string | null
           reversed_by: string | null
@@ -262,14 +314,18 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           id?: string
+          is_approved?: boolean | null
           is_reversed?: boolean | null
           movement_type: string
           observations?: string | null
           operator_name: string
           quantity: number
           reference_filling_id?: string | null
+          rejection_reason?: string | null
           reversal_reason?: string | null
           reversed_at?: string | null
           reversed_by?: string | null
@@ -280,14 +336,18 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           id?: string
+          is_approved?: boolean | null
           is_reversed?: boolean | null
           movement_type?: string
           observations?: string | null
           operator_name?: string
           quantity?: number
           reference_filling_id?: string | null
+          rejection_reason?: string | null
           reversal_reason?: string | null
           reversed_at?: string | null
           reversed_by?: string | null
@@ -349,13 +409,17 @@ export type Database = {
       }
       transfers: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           cylinder_id: string
           from_location: string
           id: string
+          is_approved: boolean | null
           is_reversed: boolean | null
           observations: string | null
           operator_name: string
+          rejection_reason: string | null
           reversal_reason: string | null
           reversed_at: string | null
           reversed_by: string | null
@@ -364,13 +428,17 @@ export type Database = {
           trip_closure: boolean | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           cylinder_id: string
           from_location: string
           id?: string
+          is_approved?: boolean | null
           is_reversed?: boolean | null
           observations?: string | null
           operator_name: string
+          rejection_reason?: string | null
           reversal_reason?: string | null
           reversed_at?: string | null
           reversed_by?: string | null
@@ -379,13 +447,17 @@ export type Database = {
           trip_closure?: boolean | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           cylinder_id?: string
           from_location?: string
           id?: string
+          is_approved?: boolean | null
           is_reversed?: boolean | null
           observations?: string | null
           operator_name?: string
+          rejection_reason?: string | null
           reversal_reason?: string | null
           reversed_at?: string | null
           reversed_by?: string | null

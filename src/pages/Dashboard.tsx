@@ -3,6 +3,7 @@ import CylinderStats from "@/components/CylinderStats";
 import UnifiedInventoryDashboard from "@/components/UnifiedInventoryDashboard";
 import ShrinkageReport from "@/components/ShrinkageReport";
 import ClientManagement from "@/components/ClientManagement";
+import CylindersByCustomer from "@/components/CylindersByCustomer";
 import Layout from "@/components/Layout";
 const Dashboard = () => {
   return <Layout>
@@ -22,6 +23,9 @@ const Dashboard = () => {
 
         {/* Inventario Unificado - Componente principal */}
         <UnifiedInventoryDashboard />
+        
+        {/* Cilindros por Cliente y Capacidad */}
+        <CylindersByCustomer />
         
         {/* Gestión de Clientes */}
         <ClientManagement />

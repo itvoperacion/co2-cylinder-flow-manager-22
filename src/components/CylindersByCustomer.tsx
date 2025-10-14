@@ -4,81 +4,65 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Users, Package, Gauge } from "lucide-react";
-
 interface CustomerCylinders {
   customer_name: string;
   total_count: number;
-  capacity_breakdown: { [capacity: string]: number };
+  capacity_breakdown: {
+    [capacity: string]: number;
+  };
 }
-
 const CylindersByCustomer = () => {
   const [customerData, setCustomerData] = useState<CustomerCylinders[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     fetchCustomerCylinders();
-    
-    const channel = supabase
-      .channel('cylinders-customer-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'cylinders'
-        },
-        () => {
-          fetchCustomerCylinders();
-        }
-      )
-      .subscribe();
-
+    const channel = supabase.channel('cylinders-customer-changes').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'cylinders'
+    }, () => {
+      fetchCustomerCylinders();
+    }).subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
-
   const fetchCustomerCylinders = async () => {
     try {
-      const { data, error } = await supabase
-        .from('cylinders')
-        .select('customer_info, capacity')
-        .eq('is_active', true)
-        .not('customer_info', 'is', null);
-
+      const {
+        data,
+        error
+      } = await supabase.from('cylinders').select('customer_info, capacity').eq('is_active', true).not('customer_info', 'is', null);
       if (error) throw error;
-
-      const customerMap: { 
-        [key: string]: { 
-          total: number; 
-          capacities: { [capacity: string]: number } 
-        } 
+      const customerMap: {
+        [key: string]: {
+          total: number;
+          capacities: {
+            [capacity: string]: number;
+          };
+        };
       } = {};
-
       data?.forEach(cylinder => {
         const customer = cylinder.customer_info || 'Sin Cliente';
         const capacity = cylinder.capacity || 'No especificada';
-        
         if (!customerMap[customer]) {
-          customerMap[customer] = { total: 0, capacities: {} };
+          customerMap[customer] = {
+            total: 0,
+            capacities: {}
+          };
         }
-        
         customerMap[customer].total++;
-        
         if (!customerMap[customer].capacities[capacity]) {
           customerMap[customer].capacities[capacity] = 0;
         }
         customerMap[customer].capacities[capacity]++;
       });
-
       const customerArray = Object.entries(customerMap).map(([customer, data]) => ({
         customer_name: customer,
         total_count: data.total,
         capacity_breakdown: data.capacities
       }));
-
       customerArray.sort((a, b) => b.total_count - a.total_count);
-      
       setCustomerData(customerArray);
     } catch (error) {
       console.error('Error fetching customer cylinders:', error);
@@ -86,35 +70,23 @@ const CylindersByCustomer = () => {
       setLoading(false);
     }
   };
-
   const getCapacityColor = (capacity: string) => {
     const colors = ['text-blue-600', 'text-green-600', 'text-purple-600', 'text-orange-600', 'text-red-600'];
     const index = capacity.length % colors.length;
     return colors[index];
   };
-
   if (loading) {
-    return (
-      <Card className="shadow-industrial">
+    return <Card className="shadow-industrial">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-6 w-6 text-primary animate-pulse" />
             Cilindros por Cliente y Capacidad
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse h-24 bg-muted rounded-lg"></div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
+        
+      </Card>;
   }
-
-  return (
-    <Card className="shadow-industrial">
+  return <Card className="shadow-industrial">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
@@ -122,17 +94,10 @@ const CylindersByCustomer = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {customerData.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">
+        {customerData.length === 0 ? <p className="text-muted-foreground text-center py-8">
             No hay cilindros asignados a clientes
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {customerData.map((customer) => (
-              <div
-                key={customer.customer_name}
-                className="bg-gradient-to-r from-background to-muted/30 rounded-lg p-5 border border-border hover:shadow-md transition-all duration-200"
-              >
+          </p> : <div className="space-y-4">
+            {customerData.map(customer => <div key={customer.customer_name} className="bg-gradient-to-r from-background to-muted/30 rounded-lg p-5 border border-border hover:shadow-md transition-all duration-200">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <Users className="h-5 w-5 text-primary" />
@@ -151,8 +116,7 @@ const CylindersByCustomer = () => {
                   </Badge>
                 </div>
 
-                {Object.keys(customer.capacity_breakdown).length > 0 && (
-                  <>
+                {Object.keys(customer.capacity_breakdown).length > 0 && <>
                     <Separator className="my-3" />
                     <div className="space-y-3">
                       <h5 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -160,11 +124,7 @@ const CylindersByCustomer = () => {
                         Desglose por Capacidad
                       </h5>
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {Object.entries(customer.capacity_breakdown).map(([capacity, count]) => (
-                          <div
-                            key={capacity}
-                            className="bg-background/50 rounded-md p-3 border border-border/50"
-                          >
+                        {Object.entries(customer.capacity_breakdown).map(([capacity, count]) => <div key={capacity} className="bg-background/50 rounded-md p-3 border border-border/50">
                             <div className="flex items-center justify-between mb-2">
                               <span className={`text-sm font-medium ${getCapacityColor(capacity)}`}>
                                 {capacity}
@@ -173,19 +133,13 @@ const CylindersByCustomer = () => {
                             <Badge variant="secondary" className="text-xs">
                               {count} {count === 1 ? 'cilindro' : 'cilindros'}
                             </Badge>
-                          </div>
-                        ))}
+                          </div>)}
                       </div>
                     </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+                  </>}
+              </div>)}
+          </div>}
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default CylindersByCustomer;

@@ -77,12 +77,7 @@ const CylindersByCustomer = () => {
   };
   if (loading) {
     return <Card className="shadow-industrial">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary animate-pulse" />
-            Cilindros por Cliente y Capacidad
-          </CardTitle>
-        </CardHeader>
+        
         
       </Card>;
   }

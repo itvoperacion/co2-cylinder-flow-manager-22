@@ -82,59 +82,8 @@ const CylindersByCustomer = () => {
       </Card>;
   }
   return <Card className="shadow-industrial">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
-          Cilindros por Cliente y Capacidad
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {customerData.length === 0 ? <p className="text-muted-foreground text-center py-8">
-            No hay cilindros asignados a clientes
-          </p> : <div className="space-y-4">
-            {customerData.map(customer => <div key={customer.customer_name} className="bg-gradient-to-r from-background to-muted/30 rounded-lg p-5 border border-border hover:shadow-md transition-all duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <Users className="h-5 w-5 text-primary" />
-                    <div>
-                      <h4 className="font-semibold text-foreground text-lg">
-                        {customer.customer_name}
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Total: {customer.total_count} cilindros
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="default" className="bg-primary text-primary-foreground">
-                    <Package className="h-3 w-3 mr-1" />
-                    {customer.total_count}
-                  </Badge>
-                </div>
-
-                {Object.keys(customer.capacity_breakdown).length > 0 && <>
-                    <Separator className="my-3" />
-                    <div className="space-y-3">
-                      <h5 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <Gauge className="h-4 w-4" />
-                        Desglose por Capacidad
-                      </h5>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {Object.entries(customer.capacity_breakdown).map(([capacity, count]) => <div key={capacity} className="bg-background/50 rounded-md p-3 border border-border/50">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className={`text-sm font-medium ${getCapacityColor(capacity)}`}>
-                                {capacity}
-                              </span>
-                            </div>
-                            <Badge variant="secondary" className="text-xs">
-                              {count} {count === 1 ? 'cilindro' : 'cilindros'}
-                            </Badge>
-                          </div>)}
-                      </div>
-                    </div>
-                  </>}
-              </div>)}
-          </div>}
-      </CardContent>
+      
+      
     </Card>;
 };
 export default CylindersByCustomer;

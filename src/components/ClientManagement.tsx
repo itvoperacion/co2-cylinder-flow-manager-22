@@ -149,11 +149,9 @@ const ClientManagement = () => {
         current_location: toLocation
       };
       
-      // Update status when transferring to despacho
-      if (toLocation === 'despacho') {
+      // Update status when transferring to despacho or devoluciones
+      if (toLocation === 'despacho' || toLocation === 'devoluciones') {
         updateData.current_status = transferStatus;
-        updateData.customer_info = null;
-      } else if (toLocation === 'devoluciones') {
         updateData.customer_info = null;
       }
       
@@ -168,7 +166,7 @@ const ClientManagement = () => {
         from_location: fromLocation,
         to_location: toLocation,
         operator_name: 'Sistema',
-        observations: `Transferencia ${fromLocation} → ${toLocation}${toLocation === 'despacho' ? ` - Estado: ${transferStatus}` : ''}`
+        observations: `Transferencia ${fromLocation} → ${toLocation}${(toLocation === 'despacho' || toLocation === 'devoluciones') ? ` - Estado: ${transferStatus}` : ''}`
       }));
       await Promise.all(transferPromises);
       toast.success('Transferencia completada exitosamente');
@@ -338,7 +336,7 @@ const ClientManagement = () => {
                       </Select>
                     </div>
                     
-                    {toLocation === 'despacho' && (
+                    {(toLocation === 'despacho' || toLocation === 'devoluciones') && (
                       <div>
                         <Label>Estado del Cilindro</Label>
                         <Select value={transferStatus} onValueChange={(value: 'vacio' | 'lleno') => setTransferStatus(value)}>

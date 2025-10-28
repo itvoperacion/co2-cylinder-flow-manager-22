@@ -149,10 +149,14 @@ const ClientManagement = () => {
         current_location: toLocation
       };
       
+      // Clear customer info when leaving clientes
+      if (fromLocation === 'clientes') {
+        updateData.customer_info = null;
+      }
+      
       // Update status when transferring to despacho or devoluciones
       if (toLocation === 'despacho' || toLocation === 'devoluciones') {
         updateData.current_status = transferStatus;
-        updateData.customer_info = null;
       }
       
       const {

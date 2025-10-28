@@ -148,17 +148,16 @@ const ClientManagement = () => {
       let updateData: any = {
         current_location: toLocation
       };
-      
+
       // Clear customer info when leaving clientes
       if (fromLocation === 'clientes') {
         updateData.customer_info = null;
       }
-      
+
       // Update status when transferring to despacho or devoluciones
       if (toLocation === 'despacho' || toLocation === 'devoluciones') {
         updateData.current_status = transferStatus;
       }
-      
       const {
         error: updateError
       } = await supabase.from('cylinders').update(updateData).in('id', selectedCylinders);
@@ -170,7 +169,7 @@ const ClientManagement = () => {
         from_location: fromLocation,
         to_location: toLocation,
         operator_name: 'Sistema',
-        observations: `Transferencia ${fromLocation} → ${toLocation}${(toLocation === 'despacho' || toLocation === 'devoluciones') ? ` - Estado: ${transferStatus}` : ''}`
+        observations: `Transferencia ${fromLocation} → ${toLocation}${toLocation === 'despacho' || toLocation === 'devoluciones' ? ` - Estado: ${transferStatus}` : ''}`
       }));
       await Promise.all(transferPromises);
       toast.success('Transferencia completada exitosamente');
@@ -209,243 +208,11 @@ const ClientManagement = () => {
         </CardContent>
       </Card>;
   }
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Gestión de Asignaciones
-            </CardTitle>
-            <div className="flex gap-2">
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nueva Asignación
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle>Crear Nueva Asignación</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="clientName">Nombre del Cliente</Label>
-                      <Input
-                        id="clientName"
-                        value={clientName}
-                        onChange={(e) => setClientName(e.target.value)}
-                        placeholder="Ingrese nombre del cliente"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="clientLocation">Ubicación del Cliente</Label>
-                      <Input
-                        id="clientLocation"
-                        value={clientLocation}
-                        onChange={(e) => setClientLocation(e.target.value)}
-                        placeholder="Ingrese ubicación"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="capacity">Capacidad de Cilindro</Label>
-                      <Select value={selectedCapacity} onValueChange={setSelectedCapacity}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione capacidad" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {uniqueCapacities.map(capacity => (
-                            <SelectItem key={capacity} value={capacity}>
-                              {capacity}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="condition">Condición</Label>
-                      <Select value={condition} onValueChange={(value: 'vacio' | 'lleno') => setCondition(value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="vacio">Vacío</SelectItem>
-                          <SelectItem value="lleno">Lleno</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="cylinderCount">Cantidad de Cilindros</Label>
-                      <Input
-                        id="cylinderCount"
-                        type="number"
-                        min={1}
-                        value={cylinderCount}
-                        onChange={(e) => setCylinderCount(parseInt(e.target.value) || 1)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="observations">Observaciones</Label>
-                      <Textarea
-                        id="observations"
-                        value={observations}
-                        onChange={(e) => setObservations(e.target.value)}
-                        placeholder="Observaciones adicionales (opcional)"
-                      />
-                    </div>
-                    <Button onClick={handleCreateAssignment} className="w-full">
-                      Crear Asignación
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <Dialog open={transferDialogOpen} onOpenChange={setTransferDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline">
-                    <ArrowRightLeft className="h-4 w-4 mr-2" />
-                    Transferir Cilindros
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Transferir Cilindros</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Desde</Label>
-                      <Select value={fromLocation} onValueChange={(value: 'rutas' | 'clientes') => setFromLocation(value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="rutas">Rutas</SelectItem>
-                          <SelectItem value="clientes">Clientes</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Hacia</Label>
-                      <Select value={toLocation} onValueChange={(value: 'clientes' | 'despacho' | 'devoluciones') => setToLocation(value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="clientes">Clientes</SelectItem>
-                          <SelectItem value="despacho">Despacho</SelectItem>
-                          <SelectItem value="devoluciones">Devoluciones</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    {(toLocation === 'despacho' || toLocation === 'devoluciones') && (
-                      <div>
-                        <Label>Estado del Cilindro</Label>
-                        <Select value={transferStatus} onValueChange={(value: 'vacio' | 'lleno') => setTransferStatus(value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="vacio">Vacío</SelectItem>
-                            <SelectItem value="lleno">Lleno</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    <div>
-                      <Label>Seleccionar Cilindros</Label>
-                      <div className="border rounded-lg p-4 max-h-64 overflow-y-auto space-y-2">
-                        {(fromLocation === 'rutas' ? cylindersFromAssignments : cylindersFromClients).map(cylinder => (
-                          <div key={cylinder.id} className="flex items-center gap-2 p-2 hover:bg-muted rounded">
-                            <input
-                              type="checkbox"
-                              checked={selectedCylinders.includes(cylinder.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedCylinders([...selectedCylinders, cylinder.id]);
-                                } else {
-                                  setSelectedCylinders(selectedCylinders.filter(id => id !== cylinder.id));
-                                }
-                              }}
-                              className="h-4 w-4"
-                            />
-                            <div className="flex-1">
-                              <div className="font-medium">{cylinder.serial_number}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {cylinder.capacity} - {cylinder.current_status}
-                              </div>
-                            </div>
-                            <Badge variant={cylinder.current_status === 'lleno' ? 'default' : 'secondary'}>
-                              {cylinder.current_status}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <Button onClick={handleTransfer} className="w-full" disabled={selectedCylinders.length === 0}>
-                      Transferir {selectedCylinders.length} Cilindro(s)
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {assignments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Building className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No hay asignaciones registradas</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {assignments.map(assignment => (
-                <Card key={assignment.id}>
-                  <CardContent className="p-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <div className="text-sm text-muted-foreground">Cliente</div>
-                        <div className="font-medium">{assignment.client_name}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          Ubicación
-                        </div>
-                        <div className="font-medium">{assignment.client_location}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Package className="h-3 w-3" />
-                          Cilindros
-                        </div>
-                        <div className="font-medium">
-                          {assignment.cylinder_count} × {assignment.cylinder_capacity}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">Condición</div>
-                        <Badge variant={assignment.condition === 'lleno' ? 'default' : 'secondary'}>
-                          {assignment.condition}
-                        </Badge>
-                      </div>
-                    </div>
-                    {assignment.observations && (
-                      <div className="mt-3 pt-3 border-t text-sm text-muted-foreground">
-                        {assignment.observations}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
+        
+        
       </Card>
-    </div>
-  );
+    </div>;
 };
 export default ClientManagement;

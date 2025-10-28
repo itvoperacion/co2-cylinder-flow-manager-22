@@ -27,7 +27,7 @@ const Dashboard = () => {
         {/* Cilindros por Cliente y Capacidad */}
         <CylindersByCustomer />
         
-        {/* Gestión de Clientes */}
+        {/* Gestión de Asignaciones */}
         <ClientManagement />
       </div>
     </Layout>;

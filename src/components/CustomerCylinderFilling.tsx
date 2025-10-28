@@ -53,7 +53,7 @@ const CustomerCylinderFilling = () => {
       console.error('Error fetching customer cylinders:', error);
       toast({
         title: "Error",
-        description: "Error al cargar los cilindros de clientes.",
+        description: "Error al cargar los cilindros de asignaciones.",
         variant: "destructive",
       });
     } finally {
@@ -183,13 +183,13 @@ const CustomerCylinderFilling = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5" />
-          Llenado de Cilindros de Clientes
+          Llenado de Cilindros de Asignaciones
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex justify-between items-center mb-4">
           <p className="text-muted-foreground">
-            Gestiona el llenado de cilindros propiedad de los clientes
+            Gestiona el llenado de cilindros asignados a clientes
           </p>
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>

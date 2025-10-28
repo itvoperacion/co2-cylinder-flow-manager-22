@@ -31,6 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import BatchFillingManager from "@/components/BatchFillingManager";
 import ReversalDialog from "@/components/ReversalDialog";
 import CustomerCylinderFilling from "@/components/CustomerCylinderFilling";
+import BatchTransferManager from "@/components/BatchTransferManager";
 
 interface Cylinder {
   id: string;
@@ -920,6 +921,11 @@ const Fillings = () => {
         </div>
       )}
       
+      {/* Batch Transfer Manager */}
+      <div className="mb-6">
+        <BatchTransferManager />
+      </div>
+
       <ReversalDialog
         open={reversalDialog.open}
         onOpenChange={(open) => setReversalDialog(prev => ({ ...prev, open }))}

@@ -70,7 +70,7 @@ const locationLabels = {
   'despacho': 'Despacho',
   'estacion_llenado': 'Estación de Llenado',
   'rutas': 'Rutas',
-  'clientes': 'Clientes',
+  'clientes': 'Asignaciones',
   'devoluciones': 'Devoluciones',
   'en_mantenimiento': 'Mantenimiento',
   'fuera_de_servicio': 'Fuera de Servicio'
@@ -524,7 +524,7 @@ const Transfers = () => {
                         <SelectItem value="despacho">Despacho</SelectItem>
                         <SelectItem value="estacion_llenado">Estación de Llenado</SelectItem>
                         <SelectItem value="rutas">Rutas</SelectItem>
-                        <SelectItem value="clientes">Clientes</SelectItem>
+                        <SelectItem value="clientes">Asignaciones</SelectItem>
                         <SelectItem value="devoluciones">Devoluciones</SelectItem>
                         <SelectItem value="en_mantenimiento">Mantenimiento</SelectItem>
                       </SelectContent>
@@ -544,7 +544,7 @@ const Transfers = () => {
                         <SelectItem value="despacho">Despacho</SelectItem>
                         <SelectItem value="estacion_llenado">Estación de Llenado</SelectItem>
                         <SelectItem value="rutas">Rutas</SelectItem>
-                        <SelectItem value="clientes">Clientes</SelectItem>
+                        <SelectItem value="clientes">Asignaciones</SelectItem>
                         <SelectItem value="devoluciones">Devoluciones</SelectItem>
                         <SelectItem value="en_mantenimiento">Mantenimiento</SelectItem>
                         <SelectItem value="fuera_de_servicio">Fuera de Servicio</SelectItem>
@@ -593,13 +593,13 @@ const Transfers = () => {
                   </div>
                 )}
 
-                {/* Lista de traslados para rutas -> clientes/devoluciones o clientes -> devoluciones */}
+                {/* Lista de traslados para rutas -> asignaciones/devoluciones o asignaciones -> devoluciones */}
                 {needsTransferList && (
                   <div className="border p-4 rounded-lg bg-yellow-50 border-yellow-200">
                     <h3 className="font-medium mb-3 text-yellow-800">
                       {formData.from_location === 'rutas' 
                         ? 'Seleccionar Traslado de Rutas' 
-                        : 'Seleccionar Traslado de Clientes'}
+                        : 'Seleccionar Traslado de Asignaciones'}
                     </h3>
                     <div className="mb-4">
                       <Label htmlFor="transfer_select">Número de Traslado *</Label>

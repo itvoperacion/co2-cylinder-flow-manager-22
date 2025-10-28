@@ -191,7 +191,7 @@ const UnifiedInventoryDashboard = () => {
       case 'en_mantenimiento':
         return 'En Mantenimiento';
       case 'clientes':
-        return 'Clientes';
+        return 'Asignaciones';
       default:
         return location.charAt(0).toUpperCase() + location.slice(1).replace('_', ' ');
     }

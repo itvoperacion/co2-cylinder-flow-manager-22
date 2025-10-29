@@ -412,11 +412,14 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           created_at: string
+          crew_name: string | null
           cylinder_id: string
+          delivery_order_number: string | null
           from_location: string
           id: string
           is_approved: boolean | null
           is_reversed: boolean | null
+          nota_envio_number: string | null
           observations: string | null
           operator_name: string
           rejection_reason: string | null
@@ -426,16 +429,21 @@ export type Database = {
           to_location: string
           transfer_number: string | null
           trip_closure: boolean | null
+          unit_number: string | null
+          zone: string | null
         }
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
+          crew_name?: string | null
           cylinder_id: string
+          delivery_order_number?: string | null
           from_location: string
           id?: string
           is_approved?: boolean | null
           is_reversed?: boolean | null
+          nota_envio_number?: string | null
           observations?: string | null
           operator_name: string
           rejection_reason?: string | null
@@ -445,16 +453,21 @@ export type Database = {
           to_location: string
           transfer_number?: string | null
           trip_closure?: boolean | null
+          unit_number?: string | null
+          zone?: string | null
         }
         Update: {
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
+          crew_name?: string | null
           cylinder_id?: string
+          delivery_order_number?: string | null
           from_location?: string
           id?: string
           is_approved?: boolean | null
           is_reversed?: boolean | null
+          nota_envio_number?: string | null
           observations?: string | null
           operator_name?: string
           rejection_reason?: string | null
@@ -464,6 +477,8 @@ export type Database = {
           to_location?: string
           transfer_number?: string | null
           trip_closure?: boolean | null
+          unit_number?: string | null
+          zone?: string | null
         }
         Relationships: [
           {

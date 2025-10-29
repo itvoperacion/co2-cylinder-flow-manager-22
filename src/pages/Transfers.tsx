@@ -48,6 +48,12 @@ interface Transfer {
   reversed_at?: string | null;
   reversed_by?: string | null;
   reversal_reason?: string | null;
+  trip_closure?: boolean;
+  unit_number?: string | null;
+  crew_name?: string | null;
+  zone?: string | null;
+  delivery_order_number?: string | null;
+  nota_envio_number?: string | null;
   cylinders?: Cylinder;
 }
 
@@ -64,6 +70,11 @@ interface TransferFormData {
   selected_cylinders: string[];
   cylinders_status: { [key: string]: string };
   trip_closure: boolean;
+  unit_number: string;
+  crew_name: string;
+  zone: string;
+  delivery_order_number: string;
+  nota_envio_number: string;
 }
 
 const locationLabels = {
@@ -72,6 +83,8 @@ const locationLabels = {
   'rutas': 'Rutas',
   'clientes': 'Asignaciones',
   'devoluciones': 'Devoluciones',
+  'devolucion_clientes': 'Devolución Clientes',
+  'cierre_rutas': 'Cierre de Rutas',
   'en_mantenimiento': 'Mantenimiento',
   'fuera_de_servicio': 'Fuera de Servicio'
 };
@@ -97,7 +110,12 @@ const Transfers = () => {
     transfer_date: new Date().toISOString().split('T')[0],
     selected_cylinders: [],
     cylinders_status: {},
-    trip_closure: false
+    trip_closure: false,
+    unit_number: "",
+    crew_name: "",
+    zone: "",
+    delivery_order_number: "",
+    nota_envio_number: ""
   });
   const [availableTransfers, setAvailableTransfers] = useState<Transfer[]>([]);
   const [selectedTransfer, setSelectedTransfer] = useState<string>("");
@@ -114,10 +132,10 @@ const Transfers = () => {
 
   useEffect(() => {
     if (formData.from_location) {
-      // Si es de rutas a clientes o de rutas a devoluciones, cargar traslados disponibles
+      // Si es de rutas a clientes, clientes a devolucion_clientes, o rutas a cierre_rutas, cargar notas de envío/órdenes
       if ((formData.from_location === 'rutas' && formData.to_location === 'clientes') ||
-          (formData.from_location === 'rutas' && formData.to_location === 'devoluciones') ||
-          (formData.from_location === 'clientes' && formData.to_location === 'devoluciones')) {
+          (formData.from_location === 'clientes' && formData.to_location === 'devolucion_clientes') ||
+          (formData.from_location === 'rutas' && formData.to_location === 'cierre_rutas')) {
         fetchAvailableTransfers();
         setAvailableCylinders([]);
         setSelectedTransfer("");
@@ -170,8 +188,11 @@ const Transfers = () => {
         .eq('current_location', location as any)
         .eq('is_active', true);
 
-      // Si es traslado de estación de llenado a despacho, solo cilindros llenos
+      // Filtrar por estado según el tipo de traslado
       if (formData.from_location === 'estacion_llenado' && formData.to_location === 'despacho') {
+        query = query.eq('current_status', 'lleno');
+      } else if (formData.from_location === 'despacho' && formData.to_location === 'rutas') {
+        // Solo cilindros llenos para despacho -> rutas
         query = query.eq('current_status', 'lleno');
       }
 
@@ -189,7 +210,7 @@ const Transfers = () => {
 
   const fetchAvailableTransfers = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('transfers')
         .select(`
           *,
@@ -201,17 +222,34 @@ const Transfers = () => {
             current_location
           )
         `)
-        .eq('to_location', 'rutas')
         .eq('is_reversed', false)
-        .eq('trip_closure', false)
-        .order('created_at', { ascending: false });
+        .eq('trip_closure', false);
+
+      // Filtrar según el tipo de traslado
+      if (formData.from_location === 'rutas' && formData.to_location === 'clientes') {
+        // Buscar notas de envío activas (despacho -> rutas)
+        query = query.eq('to_location', 'rutas');
+      } else if (formData.from_location === 'clientes' && formData.to_location === 'devolucion_clientes') {
+        // Buscar órdenes de entrega activas (rutas -> clientes)
+        query = query.eq('to_location', 'clientes');
+      } else if (formData.from_location === 'rutas' && formData.to_location === 'cierre_rutas') {
+        // Buscar notas de envío para cierre
+        query = query.eq('to_location', 'rutas');
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Group by transfer_number and show only one entry per transfer
+      // Agrupar por nota_envio_number o delivery_order_number
       const uniqueTransfers = data?.reduce((acc, transfer) => {
-        const existing = acc.find(t => t.transfer_number === transfer.transfer_number);
-        if (!existing) {
+        const key = transfer.nota_envio_number || transfer.delivery_order_number || transfer.transfer_number;
+        const existing = acc.find(t => 
+          (t.nota_envio_number === transfer.nota_envio_number && transfer.nota_envio_number) ||
+          (t.delivery_order_number === transfer.delivery_order_number && transfer.delivery_order_number) ||
+          (t.transfer_number === transfer.transfer_number && transfer.transfer_number)
+        );
+        if (!existing && key) {
           acc.push(transfer);
         }
         return acc;
@@ -224,9 +262,9 @@ const Transfers = () => {
     }
   };
 
-  const fetchCylindersFromSelectedTransfer = async (transferNumber: string) => {
+  const fetchCylindersFromSelectedTransfer = async (transferIdentifier: string) => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('transfers')
         .select(`
           *,
@@ -238,9 +276,18 @@ const Transfers = () => {
             current_location
           )
         `)
-        .eq('transfer_number', transferNumber)
-        .eq('to_location', 'rutas')
         .eq('is_reversed', false);
+
+      // Buscar por nota_envio_number, delivery_order_number o transfer_number
+      if (formData.from_location === 'rutas' && formData.to_location === 'clientes') {
+        query = query.eq('nota_envio_number', transferIdentifier).eq('to_location', 'rutas');
+      } else if (formData.from_location === 'clientes' && formData.to_location === 'devolucion_clientes') {
+        query = query.eq('delivery_order_number', transferIdentifier).eq('to_location', 'clientes');
+      } else if (formData.from_location === 'rutas' && formData.to_location === 'cierre_rutas') {
+        query = query.eq('nota_envio_number', transferIdentifier).eq('to_location', 'rutas');
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       
@@ -291,32 +338,53 @@ const Transfers = () => {
   const getRequiredFields = () => {
     const { from_location, to_location } = formData;
     
-    const needsCustomerInfo = (from_location === 'despacho' && to_location === 'rutas') ||
-                             (from_location === 'rutas' && to_location === 'devoluciones') ||
-                             (from_location === 'rutas' && to_location === 'clientes') ||
-                             (from_location === 'clientes' && to_location === 'devoluciones');
+    // Despacho -> Rutas (Nota de Envío)
+    const isDespachoToRutas = from_location === 'despacho' && to_location === 'rutas';
     
-    const needsTransferNumber = from_location === 'despacho' && to_location === 'rutas';
-    const needsTransferList = (from_location === 'rutas' && to_location === 'devoluciones') ||
-                              (from_location === 'rutas' && to_location === 'clientes') ||
-                              (from_location === 'clientes' && to_location === 'devoluciones');
-    const needsStatusEdit = from_location === 'devoluciones' && to_location === 'despacho';
-    const needsTripClosure = (from_location === 'rutas' && to_location === 'devoluciones') ||
-                             (from_location === 'devoluciones' && to_location === 'despacho') ||
-                             (from_location === 'clientes' && to_location === 'devoluciones');
+    // Rutas -> Clientes (Orden de Entrega)
+    const isRutasToClientes = from_location === 'rutas' && to_location === 'clientes';
+    
+    // Clientes -> Devolución Clientes (Orden de Entrega)
+    const isClientesToDevolucionClientes = from_location === 'clientes' && to_location === 'devolucion_clientes';
+    
+    // Rutas -> Cierre de Rutas
+    const isRutasToCierreRutas = from_location === 'rutas' && to_location === 'cierre_rutas';
+    
+    // Devoluciones -> Despacho
+    const isDevolucionesToDespacho = from_location === 'devoluciones' && to_location === 'despacho';
+    
+    const needsCustomerInfo = isDespachoToRutas || isRutasToClientes || isClientesToDevolucionClientes || isRutasToCierreRutas;
+    const needsNotaEnvio = isDespachoToRutas;
+    const needsNotaEnvioList = isRutasToClientes || isRutasToCierreRutas;
+    const needsOrdenEntregaList = isClientesToDevolucionClientes;
+    const needsStatusEdit = isDevolucionesToDespacho || isRutasToCierreRutas;
+    const needsTripClosure = isRutasToCierreRutas || isClientesToDevolucionClientes;
+    const needsUnitAndCrew = isDespachoToRutas || isRutasToClientes || isClientesToDevolucionClientes || isRutasToCierreRutas;
     
     return {
       needsCustomerInfo,
       needsDriverInfo: needsCustomerInfo,
-      needsTransferNumber,
-      needsTransferList,
+      needsNotaEnvio,
+      needsNotaEnvioList,
+      needsOrdenEntregaList,
       needsStatusEdit,
-      needsTripClosure
+      needsTripClosure,
+      needsUnitAndCrew,
+      isDespachoToRutas,
+      isRutasToClientes,
+      isClientesToDevolucionClientes,
+      isRutasToCierreRutas
     };
   };
 
   const validateForm = () => {
-    const { needsCustomerInfo, needsTransferNumber, needsTransferList } = getRequiredFields();
+    const { 
+      needsCustomerInfo, 
+      needsNotaEnvio, 
+      needsNotaEnvioList, 
+      needsOrdenEntregaList,
+      needsUnitAndCrew 
+    } = getRequiredFields();
     
     if (!formData.from_location || !formData.to_location || !formData.operator_name) {
       return false;
@@ -326,15 +394,19 @@ const Transfers = () => {
       return false;
     }
     
-    if (needsCustomerInfo && (!formData.customer_name || !formData.delivery_note_number)) {
+    if (needsCustomerInfo && !formData.customer_name) {
       return false;
     }
 
-    if (needsTransferNumber && !formData.transfer_number) {
+    if (needsNotaEnvio && !formData.nota_envio_number) {
       return false;
     }
 
-    if (needsTransferList && !selectedTransfer) {
+    if ((needsNotaEnvioList || needsOrdenEntregaList) && !selectedTransfer) {
+      return false;
+    }
+
+    if (needsUnitAndCrew && (!formData.unit_number || !formData.crew_name)) {
       return false;
     }
     
@@ -361,7 +433,13 @@ const Transfers = () => {
         to_location: formData.to_location as any,
         operator_name: formData.operator_name,
         transfer_number: formData.transfer_number || null,
-        observations: formData.observations || null
+        observations: formData.observations || null,
+        unit_number: formData.unit_number || null,
+        crew_name: formData.crew_name || null,
+        zone: formData.zone || null,
+        delivery_order_number: formData.delivery_order_number || selectedTransfer || null,
+        nota_envio_number: formData.nota_envio_number || selectedTransfer || null,
+        trip_closure: formData.trip_closure
       }));
 
       const { error: transferError } = await supabase
@@ -388,8 +466,8 @@ const Transfers = () => {
         if (statusError) throw statusError;
       }
 
-      // Si es de rutas a devoluciones, actualizar estados según selección
-      if (formData.from_location === 'rutas' && formData.to_location === 'devoluciones') {
+      // Si requiere edición de estado, actualizar según selección
+      if (needsStatusEdit) {
         const updates = formData.selected_cylinders.map(cylinderId => {
           const status = formData.cylinders_status[cylinderId] || 'vacio';
           return supabase
@@ -403,33 +481,32 @@ const Transfers = () => {
         if (errors.length > 0) throw errors[0].error;
       }
 
-      // Si es de devoluciones a despacho, actualizar estados según selección
-      if (formData.from_location === 'devoluciones' && formData.to_location === 'despacho') {
-        const updates = formData.selected_cylinders.map(cylinderId => {
-          const status = formData.cylinders_status[cylinderId] || 'vacio';
-          return supabase
-            .from('cylinders')
-            .update({ current_status: status })
-            .eq('id', cylinderId);
-        });
-
-        const results = await Promise.all(updates);
-        const errors = results.filter(result => result.error);
-        if (errors.length > 0) throw errors[0].error;
-      }
-
-      // Si "Cierre de Viaje" está marcado, actualizar todos los traslados del transfer_number seleccionado
+      // Si "Cierre de Viaje/Orden" está marcado
       if (formData.trip_closure && selectedTransfer) {
-        const { error: tripClosureError } = await supabase
-          .from('transfers')
-          .update({ trip_closure: true })
-          .eq('transfer_number', selectedTransfer);
+        const { isRutasToClientes, isClientesToDevolucionClientes, isRutasToCierreRutas } = getRequiredFields();
+        
+        let updateQuery = supabase.from('transfers').update({ trip_closure: true });
+        
+        if (isRutasToClientes || isRutasToCierreRutas) {
+          updateQuery = updateQuery.eq('nota_envio_number', selectedTransfer);
+        } else if (isClientesToDevolucionClientes) {
+          updateQuery = updateQuery.eq('delivery_order_number', selectedTransfer);
+        }
+
+        const { error: tripClosureError } = await updateQuery;
 
         if (tripClosureError) throw tripClosureError;
         
-        // Remover de la lista local también
+        // Remover de la lista local
         setAvailableTransfers(prev => 
-          prev.filter(transfer => transfer.transfer_number !== selectedTransfer)
+          prev.filter(transfer => {
+            if (isRutasToClientes || isRutasToCierreRutas) {
+              return transfer.nota_envio_number !== selectedTransfer;
+            } else if (isClientesToDevolucionClientes) {
+              return transfer.delivery_order_number !== selectedTransfer;
+            }
+            return true;
+          })
         );
       }
 
@@ -451,7 +528,12 @@ const Transfers = () => {
         transfer_date: new Date().toISOString().split('T')[0],
         selected_cylinders: [],
         cylinders_status: {},
-        trip_closure: false
+        trip_closure: false,
+        unit_number: "",
+        crew_name: "",
+        zone: "",
+        delivery_order_number: "",
+        nota_envio_number: ""
       });
       setAvailableCylinders([]);
       fetchTransfers();
@@ -485,7 +567,20 @@ const Transfers = () => {
     return matchesSearch && matchesLocation && matchesCapacity;
   });
 
-  const { needsCustomerInfo, needsDriverInfo, needsTransferNumber, needsTransferList, needsStatusEdit, needsTripClosure } = getRequiredFields();
+  const { 
+    needsCustomerInfo, 
+    needsDriverInfo, 
+    needsNotaEnvio, 
+    needsNotaEnvioList,
+    needsOrdenEntregaList,
+    needsStatusEdit, 
+    needsTripClosure,
+    needsUnitAndCrew,
+    isDespachoToRutas,
+    isRutasToClientes,
+    isClientesToDevolucionClientes,
+    isRutasToCierreRutas
+  } = getRequiredFields();
 
   return (
     <Layout>
@@ -526,6 +621,8 @@ const Transfers = () => {
                         <SelectItem value="rutas">Rutas</SelectItem>
                         <SelectItem value="clientes">Asignaciones</SelectItem>
                         <SelectItem value="devoluciones">Devoluciones</SelectItem>
+                        <SelectItem value="devolucion_clientes">Devolución Clientes</SelectItem>
+                        <SelectItem value="cierre_rutas">Cierre de Rutas</SelectItem>
                         <SelectItem value="en_mantenimiento">Mantenimiento</SelectItem>
                       </SelectContent>
                     </Select>
@@ -546,6 +643,8 @@ const Transfers = () => {
                         <SelectItem value="rutas">Rutas</SelectItem>
                         <SelectItem value="clientes">Asignaciones</SelectItem>
                         <SelectItem value="devoluciones">Devoluciones</SelectItem>
+                        <SelectItem value="devolucion_clientes">Devolución Clientes</SelectItem>
+                        <SelectItem value="cierre_rutas">Cierre de Rutas</SelectItem>
                         <SelectItem value="en_mantenimiento">Mantenimiento</SelectItem>
                         <SelectItem value="fuera_de_servicio">Fuera de Servicio</SelectItem>
                       </SelectContent>
@@ -576,45 +675,83 @@ const Transfers = () => {
                   </div>
                 </div>
 
-                {/* Campo de número de traslado para despacho -> rutas */}
-                {needsTransferNumber && (
+                {/* Campos adicionales para Unidad, Tripulación, Zona */}
+                {needsUnitAndCrew && (
                   <div className="border p-4 rounded-lg bg-blue-50 border-blue-200">
-                    <h3 className="font-medium mb-3 text-blue-800">Información de Traslado</h3>
+                    <h3 className="font-medium mb-3 text-blue-800">Información del Transporte</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="unit_number">Unidad *</Label>
+                        <Input
+                          id="unit_number"
+                          value={formData.unit_number}
+                          onChange={(e) => setFormData(prev => ({ ...prev, unit_number: e.target.value }))}
+                          placeholder="Número de unidad"
+                          required={needsUnitAndCrew}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="crew_name">Tripulación *</Label>
+                        <Input
+                          id="crew_name"
+                          value={formData.crew_name}
+                          onChange={(e) => setFormData(prev => ({ ...prev, crew_name: e.target.value }))}
+                          placeholder="Nombre de tripulación"
+                          required={needsUnitAndCrew}
+                        />
+                      </div>
+                      {(isDespachoToRutas || isRutasToCierreRutas) && (
+                        <div>
+                          <Label htmlFor="zone">Zona</Label>
+                          <Input
+                            id="zone"
+                            value={formData.zone}
+                            onChange={(e) => setFormData(prev => ({ ...prev, zone: e.target.value }))}
+                            placeholder="Zona de reparto"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Nota de Envío para despacho -> rutas */}
+                {needsNotaEnvio && (
+                  <div className="border p-4 rounded-lg bg-green-50 border-green-200">
+                    <h3 className="font-medium mb-3 text-green-800">Nota de Envío</h3>
                     <div>
-                      <Label htmlFor="transfer_number">Número de Traslado *</Label>
+                      <Label htmlFor="nota_envio_number">Nro. de Nota de Envío *</Label>
                       <Input
-                        id="transfer_number"
-                        value={formData.transfer_number}
-                        onChange={(e) => setFormData(prev => ({ ...prev, transfer_number: e.target.value }))}
-                        placeholder="Ingrese el número de traslado"
-                        required={needsTransferNumber}
+                        id="nota_envio_number"
+                        value={formData.nota_envio_number}
+                        onChange={(e) => setFormData(prev => ({ ...prev, nota_envio_number: e.target.value }))}
+                        placeholder="Ingrese el número de nota de envío"
+                        required={needsNotaEnvio}
                       />
                     </div>
                   </div>
                 )}
 
-                {/* Lista de traslados para rutas -> asignaciones/devoluciones o asignaciones -> devoluciones */}
-                {needsTransferList && (
+                {/* Lista de Notas de Envío para rutas -> clientes o rutas -> cierre_rutas */}
+                {needsNotaEnvioList && (
                   <div className="border p-4 rounded-lg bg-yellow-50 border-yellow-200">
                     <h3 className="font-medium mb-3 text-yellow-800">
-                      {formData.from_location === 'rutas' 
-                        ? 'Seleccionar Traslado de Rutas' 
-                        : 'Seleccionar Traslado de Asignaciones'}
+                      {isRutasToClientes ? 'Seleccionar Nota de Envío' : 'Seleccionar Nota de Envío para Cierre'}
                     </h3>
                     <div className="mb-4">
-                      <Label htmlFor="transfer_select">Número de Traslado *</Label>
+                      <Label htmlFor="nota_envio_select">Nro. de Nota de Envío *</Label>
                       <Select
                         value={selectedTransfer}
                         onValueChange={handleTransferSelection}
-                        required={needsTransferList}
+                        required={needsNotaEnvioList}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Seleccione el número de traslado" />
+                          <SelectValue placeholder="Seleccione la nota de envío" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Array.from(new Set(availableTransfers.map(t => t.transfer_number).filter(Boolean))).map(transferNumber => (
-                            <SelectItem key={transferNumber} value={transferNumber!}>
-                              Traslado: {transferNumber}
+                          {Array.from(new Set(availableTransfers.map(t => t.nota_envio_number).filter(Boolean))).map(notaEnvio => (
+                            <SelectItem key={notaEnvio} value={notaEnvio!}>
+                              Nota de Envío: {notaEnvio}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -623,14 +760,71 @@ const Transfers = () => {
                     
                     {selectedTransfer && (
                       <div className="p-3 bg-white rounded border">
-                        <h4 className="text-sm font-medium mb-2">Cilindros en el traslado {selectedTransfer}:</h4>
+                        <h4 className="text-sm font-medium mb-2">Cilindros en la nota {selectedTransfer}:</h4>
                         {selectedTransferCylinders.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">No hay cilindros en este traslado</p>
+                          <p className="text-sm text-muted-foreground">No hay cilindros en esta nota</p>
                         ) : (
                           <div className="space-y-1">
                             {selectedTransferCylinders.map((cylinder) => (
                               <div key={cylinder.id} className="text-sm">
-                                • {cylinder.serial_number} ({cylinder.capacity})
+                                • {cylinder.serial_number} ({cylinder.capacity}) - {cylinder.current_status}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Campo de Orden de Entrega para rutas -> clientes */}
+                    {isRutasToClientes && selectedTransfer && (
+                      <div className="mt-4">
+                        <Label htmlFor="delivery_order_number">Nro. de Orden de Entrega *</Label>
+                        <Input
+                          id="delivery_order_number"
+                          value={formData.delivery_order_number}
+                          onChange={(e) => setFormData(prev => ({ ...prev, delivery_order_number: e.target.value }))}
+                          placeholder="Ingrese el número de orden de entrega"
+                          required={isRutasToClientes}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Lista de Órdenes de Entrega para clientes -> devolución clientes */}
+                {needsOrdenEntregaList && (
+                  <div className="border p-4 rounded-lg bg-purple-50 border-purple-200">
+                    <h3 className="font-medium mb-3 text-purple-800">Seleccionar Orden de Entrega</h3>
+                    <div className="mb-4">
+                      <Label htmlFor="orden_entrega_select">Nro. de Orden de Entrega *</Label>
+                      <Select
+                        value={selectedTransfer}
+                        onValueChange={handleTransferSelection}
+                        required={needsOrdenEntregaList}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione la orden de entrega" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from(new Set(availableTransfers.map(t => t.delivery_order_number).filter(Boolean))).map(ordenEntrega => (
+                            <SelectItem key={ordenEntrega} value={ordenEntrega!}>
+                              Orden de Entrega: {ordenEntrega}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {selectedTransfer && (
+                      <div className="p-3 bg-white rounded border">
+                        <h4 className="text-sm font-medium mb-2">Cilindros en la orden {selectedTransfer}:</h4>
+                        {selectedTransferCylinders.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">No hay cilindros en esta orden</p>
+                        ) : (
+                          <div className="space-y-1">
+                            {selectedTransferCylinders.map((cylinder) => (
+                              <div key={cylinder.id} className="text-sm">
+                                • {cylinder.serial_number} ({cylinder.capacity}) - {cylinder.current_status}
                               </div>
                             ))}
                           </div>
@@ -685,7 +879,8 @@ const Transfers = () => {
                 )}
 
                 {/* Cylinder Selection */}
-                {(formData.from_location && !needsTransferList) || (needsTransferList && selectedTransfer) ? (
+                {(formData.from_location && !needsNotaEnvioList && !needsOrdenEntregaList) || 
+                 ((needsNotaEnvioList || needsOrdenEntregaList) && selectedTransfer) ? (
                   <div className="border p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-3">
                       <h3 className="font-medium">
@@ -695,43 +890,52 @@ const Transfers = () => {
                             (Solo cilindros llenos)
                           </span>
                         )}
-                        {needsTransferList && selectedTransfer && (
+                        {isDespachoToRutas && (
+                          <span className="text-sm font-normal text-green-600 ml-2">
+                            (Solo cilindros llenos de Despacho)
+                          </span>
+                        )}
+                        {(needsNotaEnvioList || needsOrdenEntregaList) && selectedTransfer && (
                           <span className="text-sm font-normal text-yellow-600 ml-2">
-                            (Del traslado {selectedTransfer})
+                            ({isRutasToClientes || isRutasToCierreRutas ? `De nota ${selectedTransfer}` : `De orden ${selectedTransfer}`})
                           </span>
                         )}
                       </h3>
-                      {((needsTransferList && selectedTransferCylinders.length > 0) || 
-                        (!needsTransferList && availableCylinders.length > 0)) && (
+                      {(((needsNotaEnvioList || needsOrdenEntregaList) && selectedTransferCylinders.length > 0) || 
+                        ((!needsNotaEnvioList && !needsOrdenEntregaList) && availableCylinders.length > 0)) && (
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id="select-all"
-                            checked={needsTransferList 
+                            checked={(needsNotaEnvioList || needsOrdenEntregaList)
                               ? formData.selected_cylinders.length === selectedTransferCylinders.length
                               : formData.selected_cylinders.length === availableCylinders.length
                             }
                             onCheckedChange={handleSelectAll}
                           />
                           <Label htmlFor="select-all" className="text-sm">
-                            Seleccionar todos ({needsTransferList ? selectedTransferCylinders.length : availableCylinders.length})
+                            Seleccionar todos ({(needsNotaEnvioList || needsOrdenEntregaList) ? selectedTransferCylinders.length : availableCylinders.length})
                           </Label>
                         </div>
                       )}
                     </div>
                     
-                    {((needsTransferList && selectedTransferCylinders.length === 0) || 
-                      (!needsTransferList && availableCylinders.length === 0)) ? (
+                    {(((needsNotaEnvioList || needsOrdenEntregaList) && selectedTransferCylinders.length === 0) || 
+                      ((!needsNotaEnvioList && !needsOrdenEntregaList) && availableCylinders.length === 0)) ? (
                       <p className="text-sm text-muted-foreground">
-                        {needsTransferList 
-                          ? "Selecciona un número de traslado para ver los cilindros disponibles"
+                        {(needsNotaEnvioList || needsOrdenEntregaList)
+                          ? isRutasToClientes || isRutasToCierreRutas
+                            ? "Selecciona una nota de envío para ver los cilindros disponibles"
+                            : "Selecciona una orden de entrega para ver los cilindros disponibles"
                           : formData.from_location === 'estacion_llenado' && formData.to_location === 'despacho' 
                             ? "No hay cilindros llenos disponibles en la estación de llenado"
-                            : "No hay cilindros disponibles en la ubicación seleccionada"
+                            : isDespachoToRutas
+                              ? "No hay cilindros llenos disponibles en Despacho"
+                              : "No hay cilindros disponibles en la ubicación seleccionada"
                         }
                       </p>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
-                        {(needsTransferList ? selectedTransferCylinders : availableCylinders).map((cylinder) => (
+                        {((needsNotaEnvioList || needsOrdenEntregaList) ? selectedTransferCylinders : availableCylinders).map((cylinder) => (
                           <div key={cylinder.id} className="flex flex-col space-y-2 p-3 border rounded">
                             <div className="flex items-center space-x-2">
                               <Checkbox
@@ -747,39 +951,12 @@ const Transfers = () => {
                               </Label>
                             </div>
                             
-                            {/* Editor de estado para rutas -> devoluciones y devoluciones -> despacho */}
-                            {(formData.from_location === 'rutas' && formData.to_location === 'devoluciones' && formData.selected_cylinders.includes(cylinder.id)) && (
-                              <div className="mt-2 ml-6">
-                                <Label className="text-xs">Estado del cilindro:</Label>
-                                <Select
-                                  value={formData.cylinders_status[cylinder.id] || 'vacio'}
-                                  onValueChange={(value) => 
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      cylinders_status: {
-                                        ...prev.cylinders_status,
-                                        [cylinder.id]: value
-                                      }
-                                    }))
-                                  }
-                                >
-                                  <SelectTrigger className="h-8 text-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="vacio">Vacío</SelectItem>
-                                    <SelectItem value="lleno">Lleno</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            )}
-                            
-                            {/* Editor de estado para devoluciones -> despacho */}
+                            {/* Editor de estado para rutas -> cierre_rutas y devoluciones -> despacho */}
                             {needsStatusEdit && formData.selected_cylinders.includes(cylinder.id) && (
                               <div className="mt-2 ml-6">
                                 <Label className="text-xs">Estado del cilindro:</Label>
                                 <Select
-                                  value={formData.cylinders_status[cylinder.id] || 'vacio'}
+                                  value={formData.cylinders_status[cylinder.id] || cylinder.current_status || 'vacio'}
                                   onValueChange={(value) => 
                                     setFormData(prev => ({
                                       ...prev,
@@ -812,16 +989,19 @@ const Transfers = () => {
                       </div>
                     )}
                   </div>
-                ) : formData.from_location && needsTransferList && !selectedTransfer && (
+                ) : formData.from_location && (needsNotaEnvioList || needsOrdenEntregaList) && !selectedTransfer && (
                   <div className="border p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      Selecciona un número de traslado para ver los cilindros disponibles
+                      {isRutasToClientes || isRutasToCierreRutas 
+                        ? "Selecciona una nota de envío para ver los cilindros disponibles"
+                        : "Selecciona una orden de entrega para ver los cilindros disponibles"
+                      }
                     </p>
                   </div>
                 )}
 
-                {/* Trip Closure Option */}
-                {needsTripClosure && (
+                {/* Trip/Order Closure Option */}
+                {needsTripClosure && selectedTransfer && (
                   <div className="border p-4 rounded-lg bg-orange-50 border-orange-200">
                     <div className="flex items-center space-x-2">
                       <Checkbox

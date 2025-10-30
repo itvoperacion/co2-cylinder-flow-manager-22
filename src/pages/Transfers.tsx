@@ -352,7 +352,7 @@ const Transfers = () => {
     // Cierre de Rutas -> Despacho
     const isCierreRutasToDespacho = from_location === 'cierre_rutas' && to_location === 'despacho';
     
-    const needsCustomerInfo = isRutasToClientes || isClientesToDevolucionClientes || isRutasToCierreRutas;
+    const needsCustomerInfo = isRutasToClientes || isClientesToDevolucionClientes;
     const needsNotaEnvio = isDespachoToRutas;
     const needsNotaEnvioList = isRutasToClientes || isRutasToCierreRutas;
     const needsOrdenEntregaList = isClientesToDevolucionClientes;

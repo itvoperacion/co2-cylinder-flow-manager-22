@@ -81,7 +81,7 @@ const locationLabels = {
   'despacho': 'Despacho',
   'estacion_llenado': 'Estación de Llenado',
   'rutas': 'Rutas',
-  'clientes': 'Asignaciones',
+  'clientes': 'Clientes',
   'devolucion_clientes': 'Devolución Clientes',
   'cierre_rutas': 'Cierre de Rutas',
   'en_mantenimiento': 'Mantenimiento',
@@ -382,7 +382,8 @@ const Transfers = () => {
       needsNotaEnvio, 
       needsNotaEnvioList, 
       needsOrdenEntregaList,
-      needsUnitAndCrew 
+      needsUnitAndCrew,
+      isRutasToClientes 
     } = getRequiredFields();
     
     if (!formData.from_location || !formData.to_location || !formData.operator_name) {
@@ -402,6 +403,10 @@ const Transfers = () => {
     }
 
     if ((needsNotaEnvioList || needsOrdenEntregaList) && !selectedTransfer) {
+      return false;
+    }
+
+    if (isRutasToClientes && !formData.delivery_order_number) {
       return false;
     }
 
@@ -618,8 +623,7 @@ const Transfers = () => {
                         <SelectItem value="despacho">Despacho</SelectItem>
                         <SelectItem value="estacion_llenado">Estación de Llenado</SelectItem>
                         <SelectItem value="rutas">Rutas</SelectItem>
-                        <SelectItem value="clientes">Asignaciones</SelectItem>
-                        <SelectItem value="devoluciones">Devoluciones</SelectItem>
+                        <SelectItem value="clientes">Clientes</SelectItem>
                         <SelectItem value="devolucion_clientes">Devolución Clientes</SelectItem>
                         <SelectItem value="cierre_rutas">Cierre de Rutas</SelectItem>
                         <SelectItem value="en_mantenimiento">Mantenimiento</SelectItem>
@@ -640,8 +644,7 @@ const Transfers = () => {
                         <SelectItem value="despacho">Despacho</SelectItem>
                         <SelectItem value="estacion_llenado">Estación de Llenado</SelectItem>
                         <SelectItem value="rutas">Rutas</SelectItem>
-                        <SelectItem value="clientes">Asignaciones</SelectItem>
-                        <SelectItem value="devoluciones">Devoluciones</SelectItem>
+                        <SelectItem value="clientes">Clientes</SelectItem>
                         <SelectItem value="devolucion_clientes">Devolución Clientes</SelectItem>
                         <SelectItem value="cierre_rutas">Cierre de Rutas</SelectItem>
                         <SelectItem value="en_mantenimiento">Mantenimiento</SelectItem>

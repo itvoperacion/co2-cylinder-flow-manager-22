@@ -353,7 +353,7 @@ const Transfers = () => {
     // Devoluciones -> Despacho
     const isDevolucionesToDespacho = from_location === 'devoluciones' && to_location === 'despacho';
     
-    const needsCustomerInfo = isDespachoToRutas || isRutasToClientes || isClientesToDevolucionClientes || isRutasToCierreRutas;
+    const needsCustomerInfo = isRutasToClientes || isClientesToDevolucionClientes || isRutasToCierreRutas;
     const needsNotaEnvio = isDespachoToRutas;
     const needsNotaEnvioList = isRutasToClientes || isRutasToCierreRutas;
     const needsOrdenEntregaList = isClientesToDevolucionClientes;

@@ -82,7 +82,6 @@ const locationLabels = {
   'estacion_llenado': 'Estación de Llenado',
   'rutas': 'Rutas',
   'clientes': 'Asignaciones',
-  'devoluciones': 'Devoluciones',
   'devolucion_clientes': 'Devolución Clientes',
   'cierre_rutas': 'Cierre de Rutas',
   'en_mantenimiento': 'Mantenimiento',
@@ -350,14 +349,14 @@ const Transfers = () => {
     // Rutas -> Cierre de Rutas
     const isRutasToCierreRutas = from_location === 'rutas' && to_location === 'cierre_rutas';
     
-    // Devoluciones -> Despacho
-    const isDevolucionesToDespacho = from_location === 'devoluciones' && to_location === 'despacho';
+    // Cierre de Rutas -> Despacho
+    const isCierreRutasToDespacho = from_location === 'cierre_rutas' && to_location === 'despacho';
     
     const needsCustomerInfo = isRutasToClientes || isClientesToDevolucionClientes || isRutasToCierreRutas;
     const needsNotaEnvio = isDespachoToRutas;
     const needsNotaEnvioList = isRutasToClientes || isRutasToCierreRutas;
     const needsOrdenEntregaList = isClientesToDevolucionClientes;
-    const needsStatusEdit = isDevolucionesToDespacho || isRutasToCierreRutas;
+    const needsStatusEdit = isCierreRutasToDespacho || isRutasToCierreRutas;
     const needsTripClosure = isRutasToCierreRutas || isClientesToDevolucionClientes;
     const needsUnitAndCrew = isDespachoToRutas || isRutasToClientes || isClientesToDevolucionClientes || isRutasToCierreRutas;
     

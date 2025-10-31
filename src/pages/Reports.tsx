@@ -14,7 +14,7 @@ import { es } from "date-fns/locale";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 
-type ReportType = "cylinders" | "fillings" | "transfers" | "tank_movements" | "system_alerts" | "shrinkage";
+type ReportType = "cylinders" | "fillings" | "transfers" | "tank_movements" | "system_alerts" | "shrinkage" | "clientes";
 
 const Reports = () => {
   const [selectedReport, setSelectedReport] = useState<ReportType>("cylinders");
@@ -56,6 +56,11 @@ const Reports = () => {
         query = supabase.from('fillings').select('*, cylinders(serial_number, capacity, current_status)');
       } else if (selectedReport === 'transfers') {
         query = supabase.from('transfers').select('*, cylinders(serial_number, capacity, current_status, current_location)');
+      } else if (selectedReport === 'clientes') {
+        query = supabase.from('transfers')
+          .select('*, cylinders(serial_number, capacity, current_status)')
+          .eq('to_location', 'clientes')
+          .eq('is_reversed', false);
       } else {
         query = supabase.from(selectedReport).select('*');
       }
@@ -81,7 +86,8 @@ const Reports = () => {
     { value: "transfers", label: "Traslados", description: "Movimientos entre ubicaciones" },
     { value: "tank_movements", label: "Movimientos Tanque", description: "Entradas y salidas del tanque principal" },
     { value: "shrinkage", label: "Reporte de Merma", description: "Análisis de merma en llenados y movimientos" },
-    { value: "system_alerts", label: "Alertas", description: "Alertas del sistema" }
+    { value: "system_alerts", label: "Alertas", description: "Alertas del sistema" },
+    { value: "clientes", label: "Clientes", description: "Cilindros asignados a clientes" }
   ];
 
   const getReportInfo = (type: ReportType) => {
@@ -127,6 +133,11 @@ const Reports = () => {
             query = supabase.from('fillings').select('*, cylinders(serial_number, capacity, current_status)');
           } else if (reportType === 'transfers') {
             query = supabase.from('transfers').select('*, cylinders(serial_number, capacity, current_status, current_location)');
+          } else if (reportType === 'clientes') {
+            query = supabase.from('transfers')
+              .select('*, cylinders(serial_number, capacity, current_status)')
+              .eq('to_location', 'clientes')
+              .eq('is_reversed', false);
           } else {
             query = supabase.from(reportType).select('*');
           }
@@ -336,6 +347,19 @@ const Reports = () => {
 
         return baseData;
       });
+    }
+
+    // Special formatting for "Clientes" report
+    if (selectedReport === 'clientes') {
+      transformedData = transformedData.map((item: any) => ({
+        'Nro. Orden de Entrega': item.delivery_order_number || 'N/A',
+        'Nombre del Cliente': item.customer_info || item.observations || 'N/A',
+        'Fecha de Traslado': item.created_at,
+        'Nro. de Serie': item.serial_number_cilindro,
+        'Capacidad': item.capacidad_cilindro,
+        'Estado': item.estado_cilindro === 'lleno' ? 'Lleno' : 'Vacío',
+        'Observaciones': item.observations || ''
+      }));
     }
 
     // Create workbook and worksheet

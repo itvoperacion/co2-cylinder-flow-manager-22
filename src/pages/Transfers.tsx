@@ -390,6 +390,14 @@ const Transfers = () => {
       });
       return;
     }
+    
+    const {
+      needsStatusEdit,
+      isRutasToClientes,
+      isClientesToDevolucionClientes,
+      isRutasToCierreRutas
+    } = getRequiredFields();
+    
     try {
       // Create transfer records for each selected cylinder
       const transferRecords = formData.selected_cylinders.map(cylinderId => ({

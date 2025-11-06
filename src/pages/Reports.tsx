@@ -8,22 +8,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Download, FileSpreadsheet } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { CalendarIcon, Download, FileSpreadsheet, Search } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
-type ReportType = "cylinders" | "fillings" | "transfers" | "tank_movements" | "system_alerts" | "shrinkage" | "clientes";
+type ReportType = "cylinders" | "fillings" | "transfers" | "tank_movements" | "system_alerts" | "shrinkage" | "clientes" | "devoluciones";
 
 const Reports = () => {
   const [selectedReport, setSelectedReport] = useState<ReportType>("cylinders");
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
+  const [customerFilter, setCustomerFilter] = useState("");
 
   // Fetch data based on selected report type
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['reports', selectedReport, dateFrom, dateTo],
+    queryKey: ['reports', selectedReport, dateFrom, dateTo, customerFilter],
     queryFn: async () => {
       // Handle shrinkage report separately
       if (selectedReport === 'shrinkage') {
@@ -61,6 +64,11 @@ const Reports = () => {
           .select('*, cylinders(serial_number, capacity, current_status, customer_info)')
           .eq('to_location', 'clientes')
           .eq('is_reversed', false);
+      } else if (selectedReport === 'devoluciones') {
+        query = supabase.from('transfers')
+          .select('*, cylinders(serial_number, capacity, current_status, customer_info)')
+          .eq('from_location', 'devolucion_clientes')
+          .eq('is_reversed', false);
       } else {
         query = supabase.from(selectedReport).select('*');
       }
@@ -75,6 +83,15 @@ const Reports = () => {
       const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
+      
+      // Apply customer filter for clientes and devoluciones reports
+      if ((selectedReport === 'clientes' || selectedReport === 'devoluciones') && customerFilter) {
+        return data?.filter((item: any) => {
+          const customerInfo = item.cylinders?.customer_info || item.observations || '';
+          return customerInfo.toLowerCase().includes(customerFilter.toLowerCase());
+        });
+      }
+      
       return data;
     },
     enabled: !!selectedReport
@@ -87,7 +104,8 @@ const Reports = () => {
     { value: "tank_movements", label: "Movimientos Tanque", description: "Entradas y salidas del tanque principal" },
     { value: "shrinkage", label: "Reporte de Merma", description: "Análisis de merma en llenados y movimientos" },
     { value: "system_alerts", label: "Alertas", description: "Alertas del sistema" },
-    { value: "clientes", label: "Clientes", description: "Cilindros asignados a clientes" }
+    { value: "clientes", label: "Clientes", description: "Cilindros asignados a clientes" },
+    { value: "devoluciones", label: "Devoluciones", description: "Cilindros devueltos por clientes" }
   ];
 
   const getReportInfo = (type: ReportType) => {
@@ -139,7 +157,7 @@ const Reports = () => {
               .eq('to_location', 'clientes')
               .eq('is_reversed', false);
           } else {
-            query = supabase.from(reportType).select('*');
+            query = supabase.from(reportType as "cylinders" | "tank_movements" | "system_alerts").select('*');
           }
           
           // Add date filtering if dates are selected
@@ -226,13 +244,11 @@ const Reports = () => {
 
     // Special handling for tank movements report
     if (selectedReport === 'tank_movements') {
-      // Get tank stock information
       const { data: tankData } = await supabase
         .from('co2_tank')
         .select('current_level, capacity')
         .single();
 
-      // Group movements by month
       const movementsByMonth = new Map();
       
       data.forEach((movement: any) => {
@@ -243,15 +259,12 @@ const Reports = () => {
         movementsByMonth.get(monthKey).push(movement);
       });
 
-      // Calculate stock at beginning of each month
       const currentStock = tankData?.current_level || 0;
       let runningStock = currentStock;
       
-      // Sort months in descending order and calculate backwards
       const sortedMonths = Array.from(movementsByMonth.keys()).sort().reverse();
       const monthlyStocks = new Map();
       
-      // Calculate stock backwards from current stock
       for (const monthKey of sortedMonths) {
         const movements = movementsByMonth.get(monthKey);
         const monthTotal = movements.reduce((sum: number, movement: any) => {
@@ -263,17 +276,14 @@ const Reports = () => {
         runningStock = runningStock - monthTotal;
       }
 
-      // Create final data with stock headers
       transformedData = [];
       
-      // Sort months chronologically for display
       const sortedMonthsAsc = Array.from(movementsByMonth.keys()).sort();
       
       for (const monthKey of sortedMonthsAsc) {
         const movements = movementsByMonth.get(monthKey);
         const stockAtBeginning = monthlyStocks.get(monthKey);
         
-        // Add month header with stock
         transformedData.push({
           id: `STOCK_${monthKey}`,
           movement_type: `STOCK INICIAL ${format(new Date(monthKey + '-01'), 'MMMM yyyy', { locale: es }).toUpperCase()}`,
@@ -293,11 +303,9 @@ const Reports = () => {
           reference_filling_id: ''
         });
 
-        // Add movements for this month
         movements.forEach((movement: any) => {
           const baseData = { ...movement };
           
-          // Format dates
           if (baseData.created_at) {
             baseData.created_at = format(new Date(baseData.created_at), 'dd/MM/yyyy HH:mm', { locale: es });
           }
@@ -342,6 +350,7 @@ const Reports = () => {
           baseData.capacidad_cilindro = baseData.cylinders.capacity;
           baseData.estado_cilindro = baseData.cylinders.current_status;
           baseData.ubicacion_cilindro = baseData.cylinders.current_location;
+          baseData.customer_info = baseData.cylinders.customer_info;
           delete baseData.cylinders;
         }
 
@@ -359,6 +368,18 @@ const Reports = () => {
         'Nro. de Serie': item.serial_number_cilindro,
         'Capacidad': item.capacidad_cilindro,
         'Observaciones': item.observations || ''
+      }));
+    }
+
+    // Special formatting for "Devoluciones" report
+    if (selectedReport === 'devoluciones') {
+      transformedData = transformedData.map((item: any) => ({
+        'Fecha de Devolución': item.created_at,
+        'Nombre del Cliente': item.customer_info || 'N/A',
+        'Nro. de Serie': item.serial_number_cilindro,
+        'Capacidad': item.capacidad_cilindro,
+        'Motivo': item.observations || 'No especificado',
+        'Operador': item.operator_name || 'N/A'
       }));
     }
 
@@ -386,6 +407,44 @@ const Reports = () => {
   const getRecordCount = () => {
     return data ? data.length : 0;
   };
+
+  // Prepare chart data for clients report
+  const getClientChartData = () => {
+    if (!data || (selectedReport !== 'clientes' && selectedReport !== 'devoluciones')) return null;
+
+    // Group by capacity
+    const capacityCount = new Map<string, number>();
+    data.forEach((item: any) => {
+      const capacity = item.cylinders?.capacity || 'N/A';
+      capacityCount.set(capacity, (capacityCount.get(capacity) || 0) + 1);
+    });
+
+    const capacityData = Array.from(capacityCount.entries())
+      .map(([capacity, count]) => ({
+        name: capacity,
+        cantidad: count
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Group by customer
+    const customerCount = new Map<string, number>();
+    data.forEach((item: any) => {
+      const customer = item.cylinders?.customer_info || item.observations || 'Sin nombre';
+      customerCount.set(customer, (customerCount.get(customer) || 0) + 1);
+    });
+
+    const customerData = Array.from(customerCount.entries())
+      .map(([customer, count]) => ({
+        name: customer.length > 20 ? customer.substring(0, 20) + '...' : customer,
+        cantidad: count
+      }))
+      .sort((a, b) => b.cantidad - a.cantidad)
+      .slice(0, 10); // Top 10 customers
+
+    return { capacityData, customerData };
+  };
+
+  const chartData = getClientChartData();
 
   return (
     <Layout>
@@ -471,18 +530,35 @@ const Reports = () => {
               </div>
             </div>
 
+            {/* Customer filter for Clientes and Devoluciones reports */}
+            {(selectedReport === 'clientes' || selectedReport === 'devoluciones') && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Buscar por Cliente</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Ingrese nombre del cliente..."
+                    value={customerFilter}
+                    onChange={(e) => setCustomerFilter(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Badge variant="secondary" className="text-sm">
                   {getRecordCount()} registros encontrados
                 </Badge>
-                {(dateFrom || dateTo) && (
+                {(dateFrom || dateTo || customerFilter) && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       setDateFrom(undefined);
                       setDateTo(undefined);
+                      setCustomerFilter("");
                     }}
                   >
                     Limpiar filtros
@@ -513,6 +589,53 @@ const Reports = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Charts for Clientes and Devoluciones reports */}
+        {chartData && (selectedReport === 'clientes' || selectedReport === 'devoluciones') && data && data.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Cilindros por Capacidad</CardTitle>
+                <CardDescription>
+                  Cantidad de cilindros agrupados por capacidad
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={chartData.capacityData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="cantidad" fill="hsl(var(--primary))" name="Cantidad" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Top 10 Clientes</CardTitle>
+                <CardDescription>
+                  Clientes con más cilindros {selectedReport === 'clientes' ? 'asignados' : 'devueltos'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={chartData.customerData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={120} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="cantidad" fill="hsl(var(--chart-2))" name="Cantidad" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Preview Card */}
         <Card>

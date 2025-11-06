@@ -351,57 +351,15 @@ const Reports = () => {
 
     // Special formatting for "Clientes" report
     if (selectedReport === 'clientes') {
-      // Group by delivery order to avoid duplicates
-      const groupedByOrder = new Map();
-      
-      transformedData.forEach((item: any) => {
-        const orderKey = item.delivery_order_number || `NO_ORDER_${item.id}`;
-        if (!groupedByOrder.has(orderKey)) {
-          groupedByOrder.set(orderKey, {
-            delivery_order_number: item.delivery_order_number || 'N/A',
-            nota_envio_number: item.nota_envio_number || 'N/A',
-            customer_info: item.customer_info || item.observations || 'N/A',
-            created_at: item.created_at,
-            cylinders: []
-          });
-        }
-        
-        groupedByOrder.get(orderKey).cylinders.push({
-          serial_number: item.serial_number_cilindro,
-          capacity: item.capacidad_cilindro,
-          status: item.estado_cilindro
-        });
-      });
-      
-      // Convert grouped data to flat structure
-      transformedData = [];
-      groupedByOrder.forEach((group) => {
-        // Count cylinders by capacity
-        const capacityCounts = new Map();
-        group.cylinders.forEach((cyl: any) => {
-          const key = cyl.capacity;
-          if (!capacityCounts.has(key)) {
-            capacityCounts.set(key, 0);
-          }
-          capacityCounts.set(key, capacityCounts.get(key) + 1);
-        });
-        
-        // Create unique serial numbers list
-        const serialNumbers = [...new Set(group.cylinders.map((c: any) => c.serial_number))].join(', ');
-        const capacities = Array.from(capacityCounts.entries())
-          .map(([capacity, count]) => `${count}x${capacity}`)
-          .join(', ');
-        
-        transformedData.push({
-          'Nro. Orden de Entrega': group.delivery_order_number,
-          'Nro. Nota de Envío': group.nota_envio_number,
-          'Nombre del Cliente': group.customer_info,
-          'Fecha de Traslado': group.created_at,
-          'Cantidad y Capacidad': capacities,
-          'Nros. de Serie': serialNumbers,
-          'Total Cilindros': group.cylinders.length
-        });
-      });
+      transformedData = transformedData.map((item: any) => ({
+        'Nro. Orden de Entrega': item.delivery_order_number || 'N/A',
+        'Nro. Nota de Envío': item.nota_envio_number || 'N/A',
+        'Nombre del Cliente': item.customer_info || 'N/A',
+        'Fecha de Traslado': item.created_at,
+        'Nro. de Serie': item.serial_number_cilindro,
+        'Capacidad': item.capacidad_cilindro,
+        'Observaciones': item.observations || ''
+      }));
     }
 
     // Create workbook and worksheet

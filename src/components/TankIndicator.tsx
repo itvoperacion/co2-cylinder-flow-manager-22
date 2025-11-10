@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Container, TrendingDown, AlertTriangle } from "lucide-react";
+import { Cylinder, TrendingDown, AlertTriangle } from "lucide-react";
 
 interface TankData {
   id: string;
@@ -61,7 +61,7 @@ const TankIndicator = () => {
       <Card className="shadow-tank">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2">
-            <Container className="h-5 w-5 text-primary" />
+            <Cylinder className="h-10 w-10 text-primary" />
             Tanque Principal CO2
           </CardTitle>
         </CardHeader>
@@ -105,7 +105,7 @@ const TankIndicator = () => {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Container className="h-5 w-5 text-primary" />
+          <Cylinder className="h-10 w-10 text-primary" />
           {tankData?.tank_name || 'Tanque Principal CO2'}
         </div>
           <Badge variant={getStatusColor() === "destructive" ? "destructive" : 

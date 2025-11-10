@@ -159,19 +159,19 @@ const UnifiedInventoryDashboard = () => {
   const getLocationIcon = (location: string) => {
     switch (location) {
       case 'despacho':
-        return <Warehouse className="h-5 w-5 text-primary" />;
+        return <Warehouse className="h-10 w-10 text-primary" />;
       case 'estacion_llenado':
-        return <Factory className="h-5 w-5 text-warning" />;
+        return <Factory className="h-10 w-10 text-warning" />;
       case 'transporte':
         return <Truck className="h-5 w-5 text-accent" />;
       case 'almacen':
         return <Warehouse className="h-5 w-5 text-muted-foreground" />;
       case 'rutas':
-        return <Truck className="h-5 w-5 text-blue-600" />;
+        return <Truck className="h-10 w-10 text-blue-600" />;
       case 'en_mantenimiento':
-        return <Wrench className="h-5 w-5 text-orange-600" />;
+        return <Wrench className="h-10 w-10 text-orange-600" />;
       case 'clientes':
-        return <Building className="h-5 w-5 text-green-600" />;
+        return <Building className="h-10 w-10 text-green-600" />;
       default:
         return <MapPin className="h-5 w-5 text-muted-foreground" />;
     }

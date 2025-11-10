@@ -14,7 +14,8 @@ import {
   BarChart3,
   Activity,
   TrendingUp,
-  Gauge
+  Gauge,
+  Wrench
 } from "lucide-react";
 
 interface LocationInventory {
@@ -158,7 +159,7 @@ const UnifiedInventoryDashboard = () => {
   const getLocationIcon = (location: string) => {
     switch (location) {
       case 'despacho':
-        return <Building className="h-5 w-5 text-primary" />;
+        return <Warehouse className="h-5 w-5 text-primary" />;
       case 'estacion_llenado':
         return <Factory className="h-5 w-5 text-warning" />;
       case 'transporte':
@@ -166,9 +167,9 @@ const UnifiedInventoryDashboard = () => {
       case 'almacen':
         return <Warehouse className="h-5 w-5 text-muted-foreground" />;
       case 'rutas':
-        return <Package className="h-5 w-5 text-blue-600" />;
+        return <Truck className="h-5 w-5 text-blue-600" />;
       case 'en_mantenimiento':
-        return <Activity className="h-5 w-5 text-orange-600" />;
+        return <Wrench className="h-5 w-5 text-orange-600" />;
       case 'clientes':
         return <Building className="h-5 w-5 text-green-600" />;
       default:

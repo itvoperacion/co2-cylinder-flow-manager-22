@@ -1,4 +1,5 @@
 import TankIndicator from "@/components/TankIndicator";
+import TankConsumptionHistory from "@/components/TankConsumptionHistory";
 import CylinderStats from "@/components/CylinderStats";
 import UnifiedInventoryDashboard from "@/components/UnifiedInventoryDashboard";
 import ShrinkageReport from "@/components/ShrinkageReport";
@@ -11,6 +12,11 @@ const Dashboard = () => {
         {/* Tank Indicator - Enhanced contrast */}
         <div className="bg-card rounded-xl p-6 border-2 border-border shadow-industrial py-0">
           <TankIndicator />
+        </div>
+
+        {/* Tank Consumption History Chart */}
+        <div className="bg-card rounded-xl p-6 border-2 border-border shadow-industrial py-0">
+          <TankConsumptionHistory />
         </div>
 
         {/* Cylinder Statistics - Enhanced contrast */}

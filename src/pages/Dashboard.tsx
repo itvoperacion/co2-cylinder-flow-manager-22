@@ -15,9 +15,7 @@ const Dashboard = () => {
         </div>
 
         {/* Tank Consumption History Chart */}
-        <div className="bg-card rounded-xl p-6 border-2 border-border shadow-industrial py-0">
-          <TankConsumptionHistory />
-        </div>
+        
 
         {/* Cylinder Statistics - Enhanced contrast */}
         

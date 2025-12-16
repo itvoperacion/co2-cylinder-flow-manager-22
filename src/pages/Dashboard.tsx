@@ -9,20 +9,15 @@ import Layout from "@/components/Layout";
 const Dashboard = () => {
   return <Layout>
       <div className="space-y-8 p-6">
-        {/* Tank Indicator - Enhanced contrast */}
-        <div className="bg-card rounded-xl p-2 border-2 border-border shadow-industrial py-0 w-1/2">
-          <TankIndicator />
-        </div>
-
-        {/* Tank Consumption History Chart */}
-        
-
-        {/* Cylinder Statistics - Enhanced contrast */}
-        
-
-        {/* Reporte de Merma - Enhanced contrast */}
-        <div className="rounded-xl p-2 border-2 shadow-industrial px-[9px] py-[6px] bg-primary-foreground border-secondary">
-          <ShrinkageReport />
+        {/* Tank Indicator y Reporte de Merma - Side by side */}
+        <div className="flex gap-4">
+          <div className="bg-card rounded-xl p-2 border-2 border-border shadow-industrial py-0 w-1/2">
+            <TankIndicator />
+          </div>
+          
+          <div className="rounded-xl p-1 border-2 shadow-industrial px-1 py-1 bg-primary-foreground border-secondary w-1/2 text-[50%] scale-75 origin-top-left">
+            <ShrinkageReport />
+          </div>
         </div>
 
         {/* Inventario Unificado - Componente principal */}

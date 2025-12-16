@@ -10,7 +10,7 @@ const Dashboard = () => {
   return <Layout>
       <div className="space-y-8 p-6">
         {/* Tank Indicator - Enhanced contrast */}
-        <div className="bg-card rounded-xl p-2 border-2 border-border shadow-industrial py-0">
+        <div className="bg-card rounded-xl p-2 border-2 border-border shadow-industrial py-0 w-1/2">
           <TankIndicator />
         </div>
 

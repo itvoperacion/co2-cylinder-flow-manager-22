@@ -11,7 +11,7 @@ const Dashboard = () => {
       <div className="space-y-8 p-6">
         {/* Tank Indicator y Reporte de Merma - Side by side */}
         <div className="flex gap-4">
-          <div className="bg-card rounded-xl p-2 border-2 border-border shadow-industrial py-0 w-1/2">
+          <div className="bg-card rounded-xl p-1 border border-border shadow-industrial py-0 w-1/2 max-h-[200px] overflow-hidden">
             <TankIndicator />
           </div>
           

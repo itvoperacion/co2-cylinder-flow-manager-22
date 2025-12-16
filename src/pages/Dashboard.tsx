@@ -21,7 +21,7 @@ const Dashboard = () => {
         
 
         {/* Reporte de Merma - Enhanced contrast */}
-        <div className="bg-card rounded-xl p-2 border-2 border-border shadow-industrial py-0">
+        <div className="rounded-xl p-2 border-2 shadow-industrial px-[9px] py-[6px] bg-primary-foreground border-secondary">
           <ShrinkageReport />
         </div>
 

@@ -15,7 +15,7 @@ const Dashboard = () => {
             <TankIndicator />
           </div>
           
-          <div className="rounded-xl p-1 border-2 shadow-industrial px-1 py-1 bg-primary-foreground border-secondary w-1/2 text-[50%] scale-75 origin-top-left">
+          <div className="rounded-xl p-1 border-2 shadow-industrial px-1 py-1 bg-primary-foreground border-secondary w-[60%] text-[50%] scale-75 origin-top-left max-h-[150px] overflow-hidden">
             <ShrinkageReport />
           </div>
         </div>

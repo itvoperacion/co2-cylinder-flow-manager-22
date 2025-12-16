@@ -58,7 +58,7 @@ const TankIndicator = () => {
 
   if (loading) {
     return (
-      <Card className="shadow-tank">
+      <Card className="shadow-tank w-1/2">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2">
             <Cylinder className="h-10 w-10 text-primary" />
@@ -101,7 +101,7 @@ const TankIndicator = () => {
   };
 
   return (
-    <Card className="shadow-tank">
+    <Card className="shadow-tank w-1/2">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between">
         <div className="flex items-center gap-2">

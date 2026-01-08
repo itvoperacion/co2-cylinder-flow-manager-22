@@ -6,29 +6,45 @@ import ShrinkageReport from "@/components/ShrinkageReport";
 import ClientManagement from "@/components/ClientManagement";
 import CylindersByCustomer from "@/components/CylindersByCustomer";
 import Layout from "@/components/Layout";
+
 const Dashboard = () => {
-  return <Layout>
-      <div className="space-y-8 p-6">
-        {/* Tank Indicator y Reporte de Merma - Side by side */}
-        <div className="flex gap-4">
-          <div className="bg-card rounded-xl p-1 border border-border shadow-industrial py-0 w-1/2 max-h-[200px] overflow-hidden">
+  return (
+    <Layout>
+      <div className="space-y-6 p-4 md:p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            Panel de Control
+          </h1>
+        </div>
+
+        {/* Top Section - Tank Indicator & Shrinkage Report */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Tank Indicator */}
+          <div className="bg-card rounded-xl border border-border shadow-sm">
             <TankIndicator />
           </div>
           
-          <div className="rounded-xl p-1 border-2 shadow-industrial px-1 py-1 bg-primary-foreground border-secondary w-[60%] text-[50%] scale-75 origin-top-left max-h-[150px] overflow-hidden">
+          {/* Shrinkage Report - Compact Version */}
+          <div className="bg-card rounded-xl border border-border shadow-sm">
             <ShrinkageReport />
           </div>
         </div>
 
-        {/* Inventario Unificado - Componente principal */}
-        <UnifiedInventoryDashboard />
-        
-        {/* Cilindros por Cliente y Capacidad */}
-        <CylindersByCustomer />
-        
-        {/* Gestión de Asignaciones */}
-        <ClientManagement />
+        {/* Main Content */}
+        <div className="space-y-6">
+          {/* Inventario Unificado */}
+          <UnifiedInventoryDashboard />
+          
+          {/* Cilindros por Cliente */}
+          <CylindersByCustomer />
+          
+          {/* Gestión de Asignaciones */}
+          <ClientManagement />
+        </div>
       </div>
-    </Layout>;
+    </Layout>
+  );
 };
+
 export default Dashboard;

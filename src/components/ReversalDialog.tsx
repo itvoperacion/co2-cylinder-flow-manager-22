@@ -60,9 +60,9 @@ const ReversalDialog = ({
           break;
         case "tank_movement":
           rpcCall = supabase.rpc("reverse_tank_movement", {
-            movement_id: recordId,
-            reversed_by: reversedBy,
-            reversal_reason: reason || null
+            p_movement_id: recordId,
+            p_reversed_by: reversedBy,
+            p_reversal_reason: reason || null
           });
           break;
         default:

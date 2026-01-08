@@ -547,9 +547,9 @@ export type Database = {
       }
       reverse_tank_movement: {
         Args: {
-          movement_id: string
-          reversal_reason?: string
-          reversed_by: string
+          p_movement_id: string
+          p_reversal_reason?: string
+          p_reversed_by: string
         }
         Returns: undefined
       }

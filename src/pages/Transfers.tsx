@@ -252,19 +252,13 @@ const Transfers = () => {
           )
         `).eq('is_reversed', false);
 
-      // Determinar la ubicación esperada del cilindro según el tipo de traslado
-      let expectedLocation = '';
-      
       // Buscar por nota_envio_number, delivery_order_number o transfer_number
       if (formData.from_location === 'rutas' && formData.to_location === 'clientes') {
         query = query.eq('nota_envio_number', transferIdentifier).eq('to_location', 'rutas');
-        expectedLocation = 'rutas';
       } else if (formData.from_location === 'clientes' && formData.to_location === 'devolucion_clientes') {
         query = query.eq('delivery_order_number', transferIdentifier).eq('to_location', 'clientes');
-        expectedLocation = 'clientes';
       } else if (formData.from_location === 'rutas' && formData.to_location === 'cierre_rutas') {
         query = query.eq('nota_envio_number', transferIdentifier).eq('to_location', 'rutas');
-        expectedLocation = 'rutas';
       }
       const {
         data,
@@ -272,14 +266,9 @@ const Transfers = () => {
       } = await query;
       if (error) throw error;
 
-      // Extraer los cilindros únicos de los traslados Y verificar que todavía estén en la ubicación correcta
+      // Extraer los cilindros únicos de los traslados
       const cylinders = data?.map(transfer => transfer.cylinders).filter(Boolean) as Cylinder[];
-      const uniqueCylinders = cylinders.filter((cylinder, index, self) => 
-        cylinder && 
-        self.findIndex(c => c && c.id === cylinder.id) === index &&
-        // Solo incluir cilindros que todavía estén en la ubicación origen esperada
-        cylinder.current_location === expectedLocation
-      );
+      const uniqueCylinders = cylinders.filter((cylinder, index, self) => cylinder && self.findIndex(c => c && c.id === cylinder.id) === index);
       setSelectedTransferCylinders(uniqueCylinders);
       setFormData(prev => ({
         ...prev,

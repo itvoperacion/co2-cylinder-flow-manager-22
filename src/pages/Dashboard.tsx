@@ -6,9 +6,11 @@ import ShrinkageReport from "@/components/ShrinkageReport";
 import ClientManagement from "@/components/ClientManagement";
 import CylindersByCustomer from "@/components/CylindersByCustomer";
 import Layout from "@/components/Layout";
+
 const Dashboard = () => {
-  return <Layout>
-      <div className="space-y-6 p-4 md:p-6 px-0 py-0">
+  return (
+    <Layout>
+      <div className="space-y-6 p-4 md:p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
@@ -41,6 +43,8 @@ const Dashboard = () => {
           <ClientManagement />
         </div>
       </div>
-    </Layout>;
+    </Layout>
+  );
 };
+
 export default Dashboard;

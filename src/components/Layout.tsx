@@ -110,7 +110,7 @@ const Layout = ({
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl px-4 sm:px-6 my-0 py-0 lg:px-0 mx-[300px]">
+      <main className="max-w-7xl px-4 sm:px-6 mx-[240px] my-0 py-0 lg:px-[8px]">
         {children}
       </main>
     </div>;

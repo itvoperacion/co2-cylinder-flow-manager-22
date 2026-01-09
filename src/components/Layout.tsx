@@ -99,7 +99,13 @@ const Layout = ({
             </div>
             
             <div className="flex items-center space-x-4">
-              <Navigation unreadAlertsCount={unreadAlertsCount} alerts={alerts} onRefresh={handleRefresh} onAlertsChange={fetchAlerts} refreshing={refreshing} />
+              <Navigation 
+                unreadAlertsCount={unreadAlertsCount} 
+                alerts={alerts}
+                onRefresh={handleRefresh} 
+                onAlertsChange={fetchAlerts}
+                refreshing={refreshing} 
+              />
               
               <Button variant="outline" onClick={handleSignOut}>
                 Cerrar Sesión
@@ -110,7 +116,7 @@ const Layout = ({
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl px-4 sm:px-6 mx-[240px] my-0 py-0 lg:px-[8px]">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
     </div>;

@@ -269,7 +269,14 @@ const Transfers = () => {
       // Extraer los cilindros únicos de los traslados
       const cylinders = data?.map(transfer => transfer.cylinders).filter(Boolean) as Cylinder[];
       const uniqueCylinders = cylinders.filter((cylinder, index, self) => cylinder && self.findIndex(c => c && c.id === cylinder.id) === index);
-      setSelectedTransferCylinders(uniqueCylinders);
+      
+      // IMPORTANTE: Filtrar solo los cilindros que actualmente están en la ubicación de origen
+      // Esto evita mostrar cilindros que ya fueron trasladados a otra ubicación
+      const cylindersInSourceLocation = uniqueCylinders.filter(
+        cylinder => cylinder.current_location === formData.from_location
+      );
+      
+      setSelectedTransferCylinders(cylindersInSourceLocation);
       setFormData(prev => ({
         ...prev,
         selected_cylinders: [],

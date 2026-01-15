@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Cylinder, AlertTriangle } from "lucide-react";
+import { Cylinder, TrendingDown, AlertTriangle } from "lucide-react";
 
 interface TankData {
   id: string;
@@ -21,6 +21,7 @@ const TankIndicator = () => {
   useEffect(() => {
     fetchTankData();
     
+    // Set up real-time subscription
     const channel = supabase
       .channel('tank-changes')
       .on(
@@ -57,11 +58,17 @@ const TankIndicator = () => {
 
   if (loading) {
     return (
-      <Card className="h-full">
-        <CardContent className="p-4">
-          <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-            <div className="h-6 bg-muted rounded"></div>
+      <Card className="shadow-tank">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2">
+            <Cylinder className="h-10 w-10 text-primary" />
+            Tanque Principal CO2
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-8 bg-muted rounded"></div>
           </div>
         </CardContent>
       </Card>
@@ -86,70 +93,75 @@ const TankIndicator = () => {
     return "Normal";
   };
 
+  const getProgressColor = () => {
+    if (isCritical) return "bg-tank-critical";
+    if (isLow) return "bg-tank-low";
+    if (percentage > 50) return "bg-tank-full";
+    return "bg-tank-medium";
+  };
+
   return (
-    <Card className="h-full">
-      <CardContent className="p-4 space-y-3">
-        {/* Header compacto */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Cylinder className="h-6 w-6 text-primary" />
-            <span className="font-semibold text-sm">
-              {tankData?.tank_name || 'Tanque CO2'}
-            </span>
-          </div>
-          <Badge 
-            variant={getStatusColor() === "destructive" ? "destructive" : "default"}
-            className={`text-xs ${
-              getStatusColor() === "success" ? "bg-success text-success-foreground" :
-              getStatusColor() === "warning" ? "bg-warning text-warning-foreground" : ""
-            }`}
-          >
+    <Card className="shadow-tank">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Cylinder className="h-10 w-10 text-primary" />
+          {tankData?.tank_name || 'Tanque Principal CO2'}
+        </div>
+          <Badge variant={getStatusColor() === "destructive" ? "destructive" : 
+                         getStatusColor() === "warning" ? "default" : "default"}
+                 className={getStatusColor() === "success" ? "bg-success text-success-foreground" :
+                           getStatusColor() === "warning" ? "bg-warning text-warning-foreground" : ""}>
             {getStatusText()}
           </Badge>
-        </div>
-
-        {/* Nivel y Progreso */}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
         <div className="space-y-2">
-          <div className="flex justify-between items-baseline">
-            <span className="text-2xl font-bold text-primary">
-              {tankData.current_level.toLocaleString()} kg
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {percentage.toFixed(1)}%
-            </span>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Nivel actual</span>
+            <span className="font-semibold">{tankData.current_level.toLocaleString()} kg</span>
           </div>
-          <Progress value={percentage} className="h-2" />
+          <Progress 
+            value={percentage} 
+            className="h-3"
+          />
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>0</span>
-            <span>Capacidad: {tankData.capacity.toLocaleString()} kg</span>
+            <span>0 kg</span>
+            <span className="font-medium">{percentage.toFixed(1)}%</span>
+            <span>{tankData.capacity.toLocaleString()} kg</span>
           </div>
         </div>
 
-        {/* Alerta si nivel bajo */}
         {isLow && (
-          <div className={`p-2 rounded-md flex items-center gap-2 text-xs ${
+          <div className={`p-3 rounded-lg border-l-4 ${
             isCritical 
-              ? "bg-destructive/10 text-destructive" 
-              : "bg-warning/10 text-warning-foreground"
+              ? "bg-destructive/10 border-l-destructive text-destructive" 
+              : "bg-warning/10 border-l-warning text-warning-foreground"
           }`}>
-            <AlertTriangle className="h-3 w-3 flex-shrink-0" />
-            <span>
-              {isCritical ? "¡Nivel crítico! Reabastecer urgente" : "Nivel bajo - Programar reabastecimiento"}
-            </span>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                {isCritical ? "¡Nivel crítico!" : "¡Nivel bajo!"}
+              </span>
+            </div>
+            <p className="text-xs mt-1 opacity-90">
+              Se requiere reabastecimiento urgente del tanque principal.
+            </p>
           </div>
         )}
 
-        {/* Info adicional */}
-        <div className="pt-2 border-t text-xs text-muted-foreground space-y-1">
-          <div className="flex justify-between">
-            <span>Umbral mínimo:</span>
+        <div className="pt-2 border-t space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground flex items-center gap-1">
+              <TrendingDown className="h-3 w-3" />
+              Umbral mínimo
+            </span>
             <span>{tankData.minimum_threshold}%</span>
           </div>
-          <div className="flex justify-between">
-            <span>Actualizado:</span>
-            <span>{new Date(tankData.last_updated).toLocaleString('es', { 
-              day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-            })}</span>
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Última actualización:</span>
+            <span>{new Date(tankData.last_updated).toLocaleString()}</span>
           </div>
         </div>
       </CardContent>

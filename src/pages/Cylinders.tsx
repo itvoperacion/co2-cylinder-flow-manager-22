@@ -21,9 +21,13 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  Printer
+  Printer,
+  Edit2,
+  Trash2
 } from "lucide-react";
 import CylinderLabelPrint from "@/components/CylinderLabelPrint";
+import CylinderEditDialog from "@/components/CylinderEditDialog";
+import CylinderDeleteDialog from "@/components/CylinderDeleteDialog";
 
 interface Cylinder {
   id: string;
@@ -54,6 +58,14 @@ const Cylinders = () => {
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [capacityFilter, setCapacityFilter] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editDialog, setEditDialog] = useState<{ open: boolean; cylinder: Cylinder | null }>({
+    open: false,
+    cylinder: null
+  });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; cylinder: Cylinder | null }>({
+    open: false,
+    cylinder: null
+  });
   const [formData, setFormData] = useState({
     serial_number: "",
     capacity: "",
@@ -507,14 +519,48 @@ const Cylinders = () => {
                 )}
 
                 {/* Action Buttons */}
-                <div className="border-t pt-3">
+                <div className="border-t pt-3 flex gap-2">
                   <CylinderLabelPrint cylinder={cylinder} />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditDialog({ open: true, cylinder })}
+                    className="flex-1"
+                  >
+                    <Edit2 className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDeleteDialog({ open: true, cylinder })}
+                    className="flex-1 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Eliminar
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Edit Dialog */}
+      <CylinderEditDialog
+        open={editDialog.open}
+        onOpenChange={(open) => setEditDialog(prev => ({ ...prev, open }))}
+        cylinder={editDialog.cylinder}
+        onSuccess={fetchCylinders}
+      />
+
+      {/* Delete Dialog */}
+      <CylinderDeleteDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
+        cylinder={deleteDialog.cylinder}
+        onSuccess={fetchCylinders}
+      />
       </div>
     </Layout>
   );

@@ -82,6 +82,7 @@ const Transfers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [capacityFilter, setCapacityFilter] = useState<string>("all");
+  const [notaEnvioFilter, setNotaEnvioFilter] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [formData, setFormData] = useState<TransferFormData>({
     from_location: "",
@@ -533,7 +534,8 @@ const Transfers = () => {
     const matchesSearch = transfer.cylinders?.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) || transfer.operator_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLocation = locationFilter === "all" || transfer.from_location === locationFilter || transfer.to_location === locationFilter;
     const matchesCapacity = capacityFilter === "all" || transfer.cylinders?.capacity === capacityFilter;
-    return matchesSearch && matchesLocation && matchesCapacity;
+    const matchesNotaEnvio = !notaEnvioFilter || (transfer.nota_envio_number && transfer.nota_envio_number.toLowerCase().includes(notaEnvioFilter.toLowerCase()));
+    return matchesSearch && matchesLocation && matchesCapacity && matchesNotaEnvio;
   });
   const {
     needsCustomerInfo,
@@ -964,11 +966,24 @@ const Transfers = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label>Nota de Envío</Label>
+                  <div className="relative">
+                    <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por nota de envío..."
+                      value={notaEnvioFilter}
+                      onChange={e => setNotaEnvioFilter(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
                 <div className="flex items-end">
                   <Button variant="outline" onClick={() => {
                   setSearchTerm("");
                   setLocationFilter("all");
                   setCapacityFilter("all");
+                  setNotaEnvioFilter("");
                 }} className="w-full">
                     Limpiar Filtros
                   </Button>

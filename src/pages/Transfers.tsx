@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Filter, ArrowRight, MapPin, Calendar, User, Truck, FileText, Package, CheckCircle2, RotateCcw } from "lucide-react";
@@ -120,14 +120,9 @@ const Transfers = () => {
     fetchTransfers();
   }, []);
   useEffect(() => {
-    if (formData.from_location && formData.to_location) {
+    if (formData.from_location) {
       // Si es de rutas a clientes, clientes a devolucion_clientes, o rutas a cierre_rutas, cargar notas de envío/órdenes
-      const needsTransferList = 
-        (formData.from_location === 'rutas' && formData.to_location === 'clientes') || 
-        (formData.from_location === 'clientes' && formData.to_location === 'devolucion_clientes') || 
-        (formData.from_location === 'rutas' && formData.to_location === 'cierre_rutas');
-      
-      if (needsTransferList) {
+      if (formData.from_location === 'rutas' && formData.to_location === 'clientes' || formData.from_location === 'clientes' && formData.to_location === 'devolucion_clientes' || formData.from_location === 'rutas' && formData.to_location === 'cierre_rutas') {
         fetchAvailableTransfers();
         setAvailableCylinders([]);
         setSelectedTransfer("");
@@ -135,20 +130,10 @@ const Transfers = () => {
       } else {
         fetchAvailableCylinders(formData.from_location);
         setAvailableTransfers([]);
-        setSelectedTransfer("");
-        setSelectedTransferCylinders([]);
       }
-    } else if (formData.from_location && !formData.to_location) {
-      // Si solo hay origen sin destino, no cargar nada aún
-      setAvailableCylinders([]);
-      setAvailableTransfers([]);
-      setSelectedTransfer("");
-      setSelectedTransferCylinders([]);
     } else {
       setAvailableCylinders([]);
       setAvailableTransfers([]);
-      setSelectedTransfer("");
-      setSelectedTransferCylinders([]);
     }
   }, [formData.from_location, formData.to_location]);
   const fetchTransfers = async () => {
@@ -241,42 +226,16 @@ const Transfers = () => {
       });
       if (error) throw error;
 
-      // IMPORTANTE: Filtrar solo los traslados cuyos cilindros están actualmente en la ubicación de origen
-      // Esto evita mostrar notas/órdenes cuyos cilindros ya fueron trasladados
-      const transfersWithAvailableCylinders = data?.filter(transfer => {
-        const cylinder = transfer.cylinders;
-        return cylinder && cylinder.current_location === formData.from_location;
-      }) || [];
-
-      // Agrupar por nota_envio_number o delivery_order_number, manteniendo solo notas con cilindros disponibles
-      const groupedByNote = new Map<string, Transfer[]>();
-      
-      transfersWithAvailableCylinders.forEach(transfer => {
-        let key = '';
-        if (formData.from_location === 'rutas' && (formData.to_location === 'clientes' || formData.to_location === 'cierre_rutas')) {
-          key = transfer.nota_envio_number || '';
-        } else if (formData.from_location === 'clientes' && formData.to_location === 'devolucion_clientes') {
-          key = transfer.delivery_order_number || '';
+      // Agrupar por nota_envio_number o delivery_order_number
+      const uniqueTransfers = data?.reduce((acc, transfer) => {
+        const key = transfer.nota_envio_number || transfer.delivery_order_number || transfer.transfer_number;
+        const existing = acc.find(t => t.nota_envio_number === transfer.nota_envio_number && transfer.nota_envio_number || t.delivery_order_number === transfer.delivery_order_number && transfer.delivery_order_number || t.transfer_number === transfer.transfer_number && transfer.transfer_number);
+        if (!existing && key) {
+          acc.push(transfer);
         }
-        
-        if (key) {
-          if (!groupedByNote.has(key)) {
-            groupedByNote.set(key, []);
-          }
-          groupedByNote.get(key)!.push(transfer);
-        }
-      });
-
-      // Convertir a array de transfers únicos (uno por nota/orden)
-      const uniqueTransfers: Transfer[] = [];
-      groupedByNote.forEach((transfers, key) => {
-        if (transfers.length > 0) {
-          // Usar el primer traslado como representante de la nota/orden
-          uniqueTransfers.push(transfers[0]);
-        }
-      });
-
-      setAvailableTransfers(uniqueTransfers);
+        return acc;
+      }, [] as Transfer[]);
+      setAvailableTransfers(uniqueTransfers || []);
     } catch (error) {
       console.error('Error fetching available transfers:', error);
       setAvailableTransfers([]);
@@ -293,9 +252,9 @@ const Transfers = () => {
             current_status,
             current_location
           )
-        `).eq('is_reversed', false).eq('trip_closure', false);
+        `).eq('is_reversed', false);
 
-      // Buscar por nota_envio_number o delivery_order_number según el tipo de traslado
+      // Buscar por nota_envio_number, delivery_order_number o transfer_number
       if (formData.from_location === 'rutas' && formData.to_location === 'clientes') {
         query = query.eq('nota_envio_number', transferIdentifier).eq('to_location', 'rutas');
       } else if (formData.from_location === 'clientes' && formData.to_location === 'devolucion_clientes') {
@@ -303,7 +262,6 @@ const Transfers = () => {
       } else if (formData.from_location === 'rutas' && formData.to_location === 'cierre_rutas') {
         query = query.eq('nota_envio_number', transferIdentifier).eq('to_location', 'rutas');
       }
-      
       const {
         data,
         error
@@ -312,19 +270,13 @@ const Transfers = () => {
 
       // Extraer los cilindros únicos de los traslados
       const cylinders = data?.map(transfer => transfer.cylinders).filter(Boolean) as Cylinder[];
-      const uniqueCylinders = cylinders.filter((cylinder, index, self) => 
-        cylinder && self.findIndex(c => c && c.id === cylinder.id) === index
-      );
+      const uniqueCylinders = cylinders.filter((cylinder, index, self) => cylinder && self.findIndex(c => c && c.id === cylinder.id) === index);
       
-      // CRÍTICO: Filtrar solo los cilindros que actualmente están en la ubicación de origen
+      // IMPORTANTE: Filtrar solo los cilindros que actualmente están en la ubicación de origen
       // Esto evita mostrar cilindros que ya fueron trasladados a otra ubicación
       const cylindersInSourceLocation = uniqueCylinders.filter(
         cylinder => cylinder.current_location === formData.from_location
       );
-      
-      console.log(`Nota/Orden: ${transferIdentifier}`);
-      console.log(`Cilindros encontrados: ${uniqueCylinders.length}`);
-      console.log(`Cilindros en ubicación ${formData.from_location}: ${cylindersInSourceLocation.length}`);
       
       setSelectedTransferCylinders(cylindersInSourceLocation);
       setFormData(prev => ({
@@ -619,9 +571,6 @@ const Transfers = () => {
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Registrar Nuevo Traslado</DialogTitle>
-                <DialogDescription>
-                  Registra el movimiento de cilindros entre ubicaciones del sistema.
-                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleAddTransfer} className="space-y-6">
                 {/* Location Selection */}

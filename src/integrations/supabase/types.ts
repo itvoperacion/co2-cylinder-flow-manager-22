@@ -227,6 +227,65 @@ export type Database = {
           },
         ]
       }
+      inventory_adjustments: {
+        Row: {
+          adjustment_date: string
+          adjustment_type: string
+          created_at: string
+          cylinder_id: string | null
+          id: string
+          location: string
+          new_status: string | null
+          observations: string | null
+          performed_by: string
+          previous_location: string | null
+          previous_status: string | null
+          quantity_adjusted: number | null
+          reason: string
+          updated_at: string
+        }
+        Insert: {
+          adjustment_date?: string
+          adjustment_type: string
+          created_at?: string
+          cylinder_id?: string | null
+          id?: string
+          location: string
+          new_status?: string | null
+          observations?: string | null
+          performed_by: string
+          previous_location?: string | null
+          previous_status?: string | null
+          quantity_adjusted?: number | null
+          reason: string
+          updated_at?: string
+        }
+        Update: {
+          adjustment_date?: string
+          adjustment_type?: string
+          created_at?: string
+          cylinder_id?: string | null
+          id?: string
+          location?: string
+          new_status?: string | null
+          observations?: string | null
+          performed_by?: string
+          previous_location?: string | null
+          previous_status?: string | null
+          quantity_adjusted?: number | null
+          reason?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_adjustments_cylinder_id_fkey"
+            columns: ["cylinder_id"]
+            isOneToOne: false
+            referencedRelation: "cylinders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string

@@ -178,9 +178,10 @@ const Adjustments = () => {
 
     setSubmitting(true);
     try {
+      const cylinderId = selectedCylinder && selectedCylinder !== "none" ? selectedCylinder : null;
       const adjustmentData = {
         location: selectedLocation,
-        cylinder_id: selectedCylinder || null,
+        cylinder_id: cylinderId,
         adjustment_type: adjustmentType,
         previous_status: selectedCylinderData?.current_status || null,
         new_status: adjustmentType === "status_change" ? newStatus : null,
@@ -197,7 +198,7 @@ const Adjustments = () => {
       if (adjustmentError) throw adjustmentError;
 
       // Update cylinder if specific cylinder selected
-      if (selectedCylinder && selectedCylinderData) {
+      if (cylinderId && selectedCylinderData) {
         const updateData: Record<string, string> = {};
         
         if (adjustmentType === "status_change" && newStatus) {
@@ -441,7 +442,7 @@ const Adjustments = () => {
                     <SelectValue placeholder="Seleccione cilindro (opcional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sin cilindro específico</SelectItem>
+                    <SelectItem value="none">Sin cilindro específico</SelectItem>
                     {filteredCylinders.map((cyl) => (
                       <SelectItem key={cyl.id} value={cyl.id}>
                         {cyl.serial_number} - {cyl.capacity}kg ({getStatusLabel(cyl.current_status)})

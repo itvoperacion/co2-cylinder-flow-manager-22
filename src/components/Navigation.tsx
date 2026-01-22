@@ -9,7 +9,8 @@ import {
   ArrowRightLeft,
   FileSpreadsheet,
   RefreshCw,
-  Gauge
+  Gauge,
+  ClipboardList
 } from "lucide-react";
 
 interface NavigationProps {
@@ -48,6 +49,11 @@ const Navigation = ({ className, unreadAlertsCount, alerts = [], onRefresh, onAl
       to: "/transfers",
       icon: ArrowRightLeft,
       label: "Traslados"
+    },
+    {
+      to: "/adjustments",
+      icon: ClipboardList,
+      label: "Ajustes"
     },
     {
       to: "/reports",

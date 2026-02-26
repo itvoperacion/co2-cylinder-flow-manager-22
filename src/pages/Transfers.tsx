@@ -12,7 +12,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Filter, ArrowRight, MapPin, Calendar, User, Truck, FileText, Package, CheckCircle2, RotateCcw } from "lucide-react";
 import Layout from "@/components/Layout";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import ReversalDialog from "@/components/ReversalDialog";
+interface Client {
+  id: string;
+  name: string;
+}
 interface Cylinder {
   id: string;
   serial_number: string;
@@ -78,6 +83,8 @@ const Transfers = () => {
   } = useToast();
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [availableCylinders, setAvailableCylinders] = useState<Cylinder[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [clientSearch, setClientSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState<string>("all");
@@ -118,7 +125,22 @@ const Transfers = () => {
   });
   useEffect(() => {
     fetchTransfers();
+    fetchClients();
   }, []);
+
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await (supabase as any).from('clients').select('id, name').eq('is_active', true).order('name');
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
+
+  const filteredClients = clients.filter(c =>
+    c.name.toLowerCase().includes(clientSearch.toLowerCase())
+  );
   useEffect(() => {
     if (formData.from_location) {
       // Si es de rutas a clientes, clientes a devolucion_clientes, o rutas a cierre_rutas, cargar notas de envío/órdenes
@@ -747,10 +769,34 @@ const Transfers = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="customer_name">Nombre del Cliente *</Label>
-                        <Input id="customer_name" value={formData.customer_name} onChange={e => setFormData(prev => ({
-                      ...prev,
-                      customer_name: e.target.value
-                    }))} required={needsCustomerInfo} />
+                        <Select value={formData.customer_name} onValueChange={value => setFormData(prev => ({
+                          ...prev,
+                          customer_name: value
+                        }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccione un cliente" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <div className="p-2">
+                              <Input
+                                placeholder="Buscar cliente..."
+                                value={clientSearch}
+                                onChange={e => setClientSearch(e.target.value)}
+                                className="h-8"
+                              />
+                            </div>
+                            <ScrollArea className="h-60">
+                              {filteredClients.map(client => (
+                                <SelectItem key={client.id} value={client.name}>
+                                  {client.name}
+                                </SelectItem>
+                              ))}
+                              {filteredClients.length === 0 && (
+                                <div className="p-2 text-sm text-muted-foreground text-center">No se encontraron clientes</div>
+                              )}
+                            </ScrollArea>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <Label htmlFor="delivery_note_number">

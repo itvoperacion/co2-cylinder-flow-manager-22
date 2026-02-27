@@ -430,6 +430,12 @@ const Transfers = () => {
     } = getRequiredFields();
     
     try {
+      // Determine correct document numbers based on route
+      const resolvedNotaEnvio = formData.nota_envio_number || 
+        ((isRutasToCierreRutas || isRutasToClientes) ? selectedTransfer : null);
+      const resolvedDeliveryOrder = formData.delivery_order_number || 
+        (isClientesToDevolucionClientes ? selectedTransfer : null);
+
       // Create transfer records for each selected cylinder
       const transferRecords = formData.selected_cylinders.map(cylinderId => ({
         cylinder_id: cylinderId,
@@ -441,8 +447,8 @@ const Transfers = () => {
         unit_number: formData.unit_number || null,
         crew_name: formData.crew_name || null,
         zone: formData.zone || null,
-        delivery_order_number: formData.delivery_order_number || selectedTransfer || null,
-        nota_envio_number: formData.nota_envio_number || selectedTransfer || null,
+        delivery_order_number: resolvedDeliveryOrder,
+        nota_envio_number: resolvedNotaEnvio,
         trip_closure: formData.trip_closure
       }));
       const {
@@ -481,35 +487,45 @@ const Transfers = () => {
         if (errors.length > 0) throw errors[0].error;
       }
 
-      // Si "Cierre de Viaje/Orden" está marcado
-      if (formData.trip_closure && selectedTransfer) {
-        const {
-          isRutasToClientes,
-          isClientesToDevolucionClientes,
-          isRutasToCierreRutas
-        } = getRequiredFields();
-        let updateQuery = supabase.from('transfers').update({
-          trip_closure: true
-        });
-        if (isRutasToClientes || isRutasToCierreRutas) {
-          updateQuery = updateQuery.eq('nota_envio_number', selectedTransfer);
-        } else if (isClientesToDevolucionClientes) {
-          updateQuery = updateQuery.eq('delivery_order_number', selectedTransfer);
-        }
-        const {
-          error: tripClosureError
-        } = await updateQuery;
-        if (tripClosureError) throw tripClosureError;
+      // Auto-cierre de nota/orden: verificar si quedan cilindros en la ubicación de origen
+      if (selectedTransfer && (isRutasToCierreRutas || isRutasToClientes || isClientesToDevolucionClientes)) {
+        // Obtener todos los cilindros asociados a esta nota/orden que aún están en el origen
+        const docField = isClientesToDevolucionClientes ? 'delivery_order_number' : 'nota_envio_number';
+        const sourceLocation = formData.from_location;
+        
+        const { data: remainingTransfers } = await supabase
+          .from('transfers')
+          .select(`
+            cylinder_id,
+            cylinders (id, current_location)
+          `)
+          .eq(docField, selectedTransfer)
+          .eq('to_location', sourceLocation)
+          .eq('is_reversed', false);
+        
+        const remainingAtSource = remainingTransfers?.filter(
+          t => t.cylinders && (t.cylinders as any).current_location === sourceLocation
+        ) || [];
+        
+        // Si no quedan cilindros en origen O el usuario marcó cierre manual, cerrar la nota
+        if (remainingAtSource.length === 0 || formData.trip_closure) {
+          const { error: tripClosureError } = await supabase
+            .from('transfers')
+            .update({ trip_closure: true })
+            .eq(docField, selectedTransfer)
+            .eq('to_location', sourceLocation);
+          if (tripClosureError) throw tripClosureError;
 
-        // Remover de la lista local
-        setAvailableTransfers(prev => prev.filter(transfer => {
-          if (isRutasToClientes || isRutasToCierreRutas) {
-            return transfer.nota_envio_number !== selectedTransfer;
-          } else if (isClientesToDevolucionClientes) {
-            return transfer.delivery_order_number !== selectedTransfer;
-          }
-          return true;
-        }));
+          // Remover de la lista local
+          setAvailableTransfers(prev => prev.filter(transfer => {
+            if (isRutasToClientes || isRutasToCierreRutas) {
+              return transfer.nota_envio_number !== selectedTransfer;
+            } else if (isClientesToDevolucionClientes) {
+              return transfer.delivery_order_number !== selectedTransfer;
+            }
+            return true;
+          }));
+        }
       }
       toast({
         title: "Éxito",

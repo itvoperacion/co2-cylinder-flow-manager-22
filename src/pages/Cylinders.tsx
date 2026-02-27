@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
+import {
   Plus,
   Search,
   Filter,
@@ -23,8 +23,8 @@ import {
   Clock,
   Printer,
   Edit2,
-  Trash2
-} from "lucide-react";
+  Trash2 } from
+"lucide-react";
 import CylinderLabelPrint from "@/components/CylinderLabelPrint";
 import CylinderEditDialog from "@/components/CylinderEditDialog";
 import CylinderDeleteDialog from "@/components/CylinderDeleteDialog";
@@ -58,11 +58,11 @@ const Cylinders = () => {
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [capacityFilter, setCapacityFilter] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [editDialog, setEditDialog] = useState<{ open: boolean; cylinder: Cylinder | null }>({
+  const [editDialog, setEditDialog] = useState<{open: boolean;cylinder: Cylinder | null;}>({
     open: false,
     cylinder: null
   });
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; cylinder: Cylinder | null }>({
+  const [deleteDialog, setDeleteDialog] = useState<{open: boolean;cylinder: Cylinder | null;}>({
     open: false,
     cylinder: null
   });
@@ -83,10 +83,10 @@ const Cylinders = () => {
 
   const fetchCylinders = async () => {
     try {
-      const { data, error } = await supabase
-        .from('cylinders')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.
+      from('cylinders').
+      select('*').
+      order('created_at', { ascending: false });
 
       if (error) throw error;
       setCylinders(data || []);
@@ -95,7 +95,7 @@ const Cylinders = () => {
       toast({
         title: "Error",
         description: "Error al cargar los cilindros.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
@@ -104,30 +104,30 @@ const Cylinders = () => {
 
   const handleAddCylinder = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const nextTestDate = new Date(formData.last_hydrostatic_test);
       nextTestDate.setFullYear(nextTestDate.getFullYear() + 5);
 
-      const { error } = await supabase
-        .from('cylinders')
-        .insert({
-          serial_number: formData.serial_number,
-          capacity: formData.capacity as "9kg" | "22kg" | "25kg",
-          valve_type: formData.valve_type as "industrial" | "special",
-          manufacturing_date: formData.manufacturing_date,
-          last_hydrostatic_test: formData.last_hydrostatic_test,
-          next_test_due: nextTestDate.toISOString().split('T')[0],
-          observations: formData.observations || null,
-          customer_owned: formData.customer_owned,
-          customer_info: formData.customer_owned ? formData.customer_info : null
-        });
+      const { error } = await supabase.
+      from('cylinders').
+      insert({
+        serial_number: formData.serial_number,
+        capacity: formData.capacity as "9kg" | "22kg" | "25kg",
+        valve_type: formData.valve_type as "industrial" | "special",
+        manufacturing_date: formData.manufacturing_date,
+        last_hydrostatic_test: formData.last_hydrostatic_test,
+        next_test_due: nextTestDate.toISOString().split('T')[0],
+        observations: formData.observations || null,
+        customer_owned: formData.customer_owned,
+        customer_info: formData.customer_owned ? formData.customer_info : null
+      });
 
       if (error) throw error;
 
       toast({
         title: "Éxito",
-        description: "Cilindro registrado correctamente.",
+        description: "Cilindro registrado correctamente."
       });
 
       setShowAddDialog(false);
@@ -147,7 +147,7 @@ const Cylinders = () => {
       toast({
         title: "Error",
         description: "Error al registrar el cilindro.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -160,17 +160,17 @@ const Cylinders = () => {
       'mantenimiento': { label: 'Mantenimiento', variant: 'destructive' as const, icon: AlertCircle }
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || 
-                  { label: status, variant: 'outline' as const, icon: Package };
-    
+    const config = statusConfig[status as keyof typeof statusConfig] ||
+    { label: status, variant: 'outline' as const, icon: Package };
+
     const Icon = config.icon;
-    
+
     return (
       <Badge variant={config.variant} className="flex items-center gap-1">
         <Icon className="h-3 w-3" />
         {config.label}
-      </Badge>
-    );
+      </Badge>);
+
   };
 
   const getLocationBadge = (location: string) => {
@@ -181,18 +181,18 @@ const Cylinders = () => {
       'entregado': { label: 'Entregado', color: 'text-purple-600' }
     };
 
-    const config = locationConfig[location as keyof typeof locationConfig] || 
-                  { label: location, color: 'text-gray-600' };
-    
+    const config = locationConfig[location as keyof typeof locationConfig] ||
+    { label: location, color: 'text-gray-600' };
+
     return (
       <div className={`flex items-center gap-1 ${config.color}`}>
         <MapPin className="h-3 w-3" />
         <span className="text-sm font-medium">{config.label}</span>
-      </div>
-    );
+      </div>);
+
   };
 
-  const filteredCylinders = cylinders.filter(cylinder => {
+  const filteredCylinders = cylinders.filter((cylinder) => {
     const matchesSearch = cylinder.serial_number.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || cylinder.current_status === statusFilter;
     const matchesLocation = locationFilter === "all" || cylinder.current_location === locationFilter;
@@ -225,19 +225,19 @@ const Cylinders = () => {
                 <div>
                   <Label htmlFor="serial_number">Número de Serie</Label>
                   <Input
-                    id="serial_number"
-                    value={formData.serial_number}
-                    onChange={(e) => setFormData(prev => ({ ...prev, serial_number: e.target.value }))}
-                    required
-                  />
+                      id="serial_number"
+                      value={formData.serial_number}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, serial_number: e.target.value }))}
+                      required />
+
                 </div>
                 <div>
                   <Label htmlFor="capacity">Capacidad</Label>
                   <Select
-                    value={formData.capacity}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, capacity: value }))}
-                    required
-                  >
+                      value={formData.capacity}
+                      onValueChange={(value) => setFormData((prev) => ({ ...prev, capacity: value }))}
+                      required>
+
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona capacidad" />
                     </SelectTrigger>
@@ -251,9 +251,9 @@ const Cylinders = () => {
                 <div>
                   <Label htmlFor="valve_type">Tipo de Válvula</Label>
                   <Select
-                    value={formData.valve_type}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, valve_type: value }))}
-                  >
+                      value={formData.valve_type}
+                      onValueChange={(value) => setFormData((prev) => ({ ...prev, valve_type: value }))}>
+
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -266,35 +266,35 @@ const Cylinders = () => {
                 <div>
                   <Label htmlFor="manufacturing_date">Fecha de Fabricación</Label>
                   <Input
-                    id="manufacturing_date"
-                    type="date"
-                    value={formData.manufacturing_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, manufacturing_date: e.target.value }))}
-                    required
-                  />
+                      id="manufacturing_date"
+                      type="date"
+                      value={formData.manufacturing_date}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, manufacturing_date: e.target.value }))}
+                      required />
+
                 </div>
                 <div className="col-span-2">
                   <Label htmlFor="last_hydrostatic_test">Última Prueba Hidrostática</Label>
                   <Input
-                    id="last_hydrostatic_test"
-                    type="date"
-                    value={formData.last_hydrostatic_test}
-                    onChange={(e) => setFormData(prev => ({ ...prev, last_hydrostatic_test: e.target.value }))}
-                    required
-                  />
+                      id="last_hydrostatic_test"
+                      type="date"
+                      value={formData.last_hydrostatic_test}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, last_hydrostatic_test: e.target.value }))}
+                      required />
+
                 </div>
                 {/* Customer Owned Checkbox */}
                 <div className="col-span-2">
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      id="customer_owned"
-                      checked={formData.customer_owned}
-                      onCheckedChange={(checked) => setFormData(prev => ({ 
-                        ...prev, 
-                        customer_owned: checked as boolean,
-                        customer_info: checked ? prev.customer_info : ""
-                      }))}
-                    />
+                        id="customer_owned"
+                        checked={formData.customer_owned}
+                        onCheckedChange={(checked) => setFormData((prev) => ({
+                          ...prev,
+                          customer_owned: checked as boolean,
+                          customer_info: checked ? prev.customer_info : ""
+                        }))} />
+
                     <Label htmlFor="customer_owned" className="cursor-pointer">
                       Cilindro propiedad del cliente
                     </Label>
@@ -302,27 +302,27 @@ const Cylinders = () => {
                 </div>
 
                 {/* Customer Info */}
-                {formData.customer_owned && (
+                {formData.customer_owned &&
                   <div className="col-span-2">
                     <Label htmlFor="customer_info">Información del Cliente</Label>
                     <Input
                       id="customer_info"
                       value={formData.customer_info}
-                      onChange={(e) => setFormData(prev => ({ ...prev, customer_info: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, customer_info: e.target.value }))}
                       placeholder="Nombre/Empresa del cliente"
-                      required={formData.customer_owned}
-                    />
+                      required={formData.customer_owned} />
+
                   </div>
-                )}
+                  }
 
                 <div className="col-span-2">
                   <Label htmlFor="observations">Observaciones</Label>
                   <Textarea
-                    id="observations"
-                    value={formData.observations}
-                    onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
-                    placeholder="Observaciones adicionales..."
-                  />
+                      id="observations"
+                      value={formData.observations}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, observations: e.target.value }))}
+                      placeholder="Observaciones adicionales..." />
+
                 </div>
               </div>
               <div className="flex gap-2 justify-end">
@@ -345,12 +345,12 @@ const Cylinders = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="search"
-                  placeholder="Número de serie..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
+                    id="search"
+                    placeholder="Número de serie..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9" />
+
               </div>
             </div>
             <div>
@@ -401,16 +401,16 @@ const Cylinders = () => {
               </Select>
             </div>
             <div className="flex items-end">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSearchTerm("");
-                  setStatusFilter("all");
-                  setLocationFilter("all");
-                  setCapacityFilter("all");
-                }}
-                className="w-full"
-              >
+              <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter("all");
+                    setLocationFilter("all");
+                    setCapacityFilter("all");
+                  }}
+                  className="w-full">
+
                 Limpiar Filtros
               </Button>
             </div>
@@ -419,10 +419,10 @@ const Cylinders = () => {
       </Card>
 
       {/* Cylinders Grid */}
-      {loading ? (
+      {loading ?
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <Card key={i} className="shadow-industrial">
+          {[1, 2, 3, 4, 5, 6].map((i) =>
+          <Card key={i} className="shadow-industrial">
               <CardContent className="p-6">
                 <div className="animate-pulse space-y-4">
                   <div className="h-4 bg-muted rounded w-3/4"></div>
@@ -431,31 +431,31 @@ const Cylinders = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      ) : filteredCylinders.length === 0 ? (
+          )}
+        </div> :
+        filteredCylinders.length === 0 ?
         <Card className="shadow-industrial">
           <CardContent className="p-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">No se encontraron cilindros</h3>
             <p className="text-muted-foreground mb-4">
-              {cylinders.length === 0 
-                ? "Comienza registrando tu primer cilindro." 
-                : "Intenta ajustar los filtros de búsqueda."
+              {cylinders.length === 0 ?
+              "Comienza registrando tu primer cilindro." :
+              "Intenta ajustar los filtros de búsqueda."
               }
             </p>
-            {cylinders.length === 0 && (
-              <Button onClick={() => setShowAddDialog(true)}>
+            {cylinders.length === 0 &&
+            <Button onClick={() => setShowAddDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Registrar Primer Cilindro
               </Button>
-            )}
+            }
           </CardContent>
-        </Card>
-      ) : (
+        </Card> :
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCylinders.map((cylinder) => (
-            <Card key={cylinder.id} className="shadow-industrial hover:shadow-lg transition-shadow">
+          {filteredCylinders.map((cylinder) =>
+          <Card key={cylinder.id} className="shadow-industrial hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg">{cylinder.serial_number}</CardTitle>
@@ -469,7 +469,7 @@ const Cylinders = () => {
                   {getLocationBadge(cylinder.current_location)}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 mx-0 px-[5px]">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="font-medium">Válvula:</span>
@@ -493,77 +493,77 @@ const Cylinders = () => {
                     <span>Próxima prueba:</span>
                   </div>
                   <span className={`text-sm font-medium ${
-                    cylinder.next_test_due && new Date(cylinder.next_test_due) < new Date() 
-                      ? 'text-destructive' 
-                      : 'text-foreground'
-                  }`}>
-                    {cylinder.next_test_due 
-                      ? new Date(cylinder.next_test_due).toLocaleDateString()
-                      : 'No definida'
-                    }
+                cylinder.next_test_due && new Date(cylinder.next_test_due) < new Date() ?
+                'text-destructive' :
+                'text-foreground'}`
+                }>
+                    {cylinder.next_test_due ?
+                  new Date(cylinder.next_test_due).toLocaleDateString() :
+                  'No definida'
+                  }
                   </span>
                 </div>
 
-                {cylinder.customer_owned && (
-                  <div className="border-t pt-3">
+                {cylinder.customer_owned &&
+              <div className="border-t pt-3">
                     <span className="text-xs font-medium text-red-600">Cliente:</span>
                     <p className="text-sm mt-1">{cylinder.customer_info}</p>
                   </div>
-                )}
+              }
 
-                {cylinder.observations && (
-                  <div className="border-t pt-3">
+                {cylinder.observations &&
+              <div className="border-t pt-3">
                     <span className="text-xs font-medium text-muted-foreground">Observaciones:</span>
                     <p className="text-sm mt-1">{cylinder.observations}</p>
                   </div>
-                )}
+              }
 
                 {/* Action Buttons */}
                 <div className="border-t pt-3 flex gap-2">
                   <CylinderLabelPrint cylinder={cylinder} />
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditDialog({ open: true, cylinder })}
-                    className="flex-1"
-                  >
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditDialog({ open: true, cylinder })}
+                  className="flex-1">
+
                     <Edit2 className="h-4 w-4 mr-1" />
                     Editar
                   </Button>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setDeleteDialog({ open: true, cylinder })}
-                    className="flex-1 text-destructive hover:text-destructive"
-                  >
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDeleteDialog({ open: true, cylinder })}
+                  className="flex-1 text-destructive hover:text-destructive">
+
                     <Trash2 className="h-4 w-4 mr-1" />
                     Eliminar
                   </Button>
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )}
         </div>
-      )}
+        }
 
       {/* Edit Dialog */}
       <CylinderEditDialog
-        open={editDialog.open}
-        onOpenChange={(open) => setEditDialog(prev => ({ ...prev, open }))}
-        cylinder={editDialog.cylinder}
-        onSuccess={fetchCylinders}
-      />
+          open={editDialog.open}
+          onOpenChange={(open) => setEditDialog((prev) => ({ ...prev, open }))}
+          cylinder={editDialog.cylinder}
+          onSuccess={fetchCylinders} />
+
 
       {/* Delete Dialog */}
       <CylinderDeleteDialog
-        open={deleteDialog.open}
-        onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
-        cylinder={deleteDialog.cylinder}
-        onSuccess={fetchCylinders}
-      />
+          open={deleteDialog.open}
+          onOpenChange={(open) => setDeleteDialog((prev) => ({ ...prev, open }))}
+          cylinder={deleteDialog.cylinder}
+          onSuccess={fetchCylinders} />
+
       </div>
-    </Layout>
-  );
+    </Layout>);
+
 };
 
 export default Cylinders;

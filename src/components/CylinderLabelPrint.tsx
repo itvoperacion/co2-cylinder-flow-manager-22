@@ -45,29 +45,29 @@ const CylinderLabelPrint = ({ cylinder }: CylinderLabelPrintProps) => {
 
         <div className="print:block">
           <div
-            className="border-2 border-black bg-white text-black print:border-black mx-auto shadow-industrial overflow-hidden"
+            className="border-2 border-black bg-white text-black print:border-black mx-auto shadow-industrial overflow-hidden px-[8px]"
             style={{
               width: "10cm",
               height: "5cm",
               fontSize: "12px",
               lineHeight: "1.2",
-              padding: "3mm 4mm",
-            }}
-          >
+              padding: "3mm 4mm"
+            }}>
+
             <div className="h-full flex flex-row items-center gap-2">
               {/* Left: Logo */}
               <div className="flex-shrink-0 flex items-center justify-center" style={{ width: "2.2cm" }}>
                 <img
                   src={logoTransvictoria}
                   alt="Inversiones TransVictoria"
-                  style={{ width: "2cm", height: "auto" }}
-                />
+                  style={{ width: "2cm", height: "auto" }} />
+
               </div>
 
               {/* Center: Info */}
               <div className="flex-1 flex flex-col items-center justify-center text-center gap-0.5">
                 <div className="text-xs font-semibold tracking-wide" style={{ fontSize: "9px" }}>
-                  INVERSIONES TRANSVICTORIA
+
                 </div>
                 <div className="text-xl font-black tracking-wider">
                   CO2
@@ -89,8 +89,8 @@ const CylinderLabelPrint = ({ cylinder }: CylinderLabelPrintProps) => {
                   fontSize={8}
                   margin={0}
                   displayValue={false}
-                  format="CODE128"
-                />
+                  format="CODE128" />
+
               </div>
             </div>
           </div>
@@ -121,8 +121,8 @@ const CylinderLabelPrint = ({ cylinder }: CylinderLabelPrintProps) => {
           `
         }} />
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>);
+
 };
 
 export default CylinderLabelPrint;

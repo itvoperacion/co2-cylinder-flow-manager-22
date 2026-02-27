@@ -10,7 +10,8 @@ import {
   FileSpreadsheet,
   RefreshCw,
   Gauge,
-  ClipboardList
+  ClipboardList,
+  DatabaseBackup
 } from "lucide-react";
 
 interface NavigationProps {
@@ -59,6 +60,11 @@ const Navigation = ({ className, unreadAlertsCount, alerts = [], onRefresh, onAl
       to: "/reports",
       icon: FileSpreadsheet,
       label: "Reportes"
+    },
+    {
+      to: "/backup",
+      icon: DatabaseBackup,
+      label: "Respaldo"
     }
   ];
 

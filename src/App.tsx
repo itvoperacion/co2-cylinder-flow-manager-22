@@ -11,6 +11,7 @@ import Transfers from "./pages/Transfers";
 import Reports from "./pages/Reports";
 import TankInventory from "./pages/TankInventory";
 import Adjustments from "./pages/Adjustments";
+import Backup from "./pages/Backup";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -79,6 +80,11 @@ const AppRoutes = () => (
     <Route path="/adjustments" element={
       <ProtectedRoute>
         <Adjustments />
+      </ProtectedRoute>
+    } />
+    <Route path="/backup" element={
+      <ProtectedRoute>
+        <Backup />
       </ProtectedRoute>
     } />
     <Route path="/auth" element={

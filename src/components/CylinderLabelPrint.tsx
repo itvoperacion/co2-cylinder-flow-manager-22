@@ -37,7 +37,7 @@ const CylinderLabelPrint = ({
         
         <div className="print:block">
           {/* Label with exact dimensions: 10cm x 5cm (378px x 189px at 96 DPI) */}
-          <div className="border-2 border-black bg-white text-black print:border-black mx-0 px-0 py-0" style={{
+          <div className="border-2 border-black bg-white text-black print:border-black mx-[3px] py-0 px-0 my-0 shadow-industrial" style={{
           width: '10cm',
           height: '5cm',
           fontSize: '12px',

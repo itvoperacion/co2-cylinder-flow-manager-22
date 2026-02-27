@@ -2,6 +2,9 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Printer } from "lucide-react";
+import Barcode from "react-barcode";
+import logoTransvictoria from "@/assets/logo-transvictoria.png";
+
 interface Cylinder {
   id: string;
   serial_number: string;
@@ -14,16 +17,21 @@ interface Cylinder {
   customer_owned?: boolean;
   customer_info?: string | null;
 }
+
 interface CylinderLabelPrintProps {
   cylinder: Cylinder;
 }
-const CylinderLabelPrint = ({
-  cylinder
-}: CylinderLabelPrintProps) => {
+
+const CylinderLabelPrint = ({ cylinder }: CylinderLabelPrintProps) => {
   const handlePrint = () => {
     window.print();
   };
-  return <Dialog>
+
+  // Generate a unique barcode value from serial number
+  const barcodeValue = cylinder.serial_number;
+
+  return (
+    <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="flex items-center gap-1">
           <Printer className="h-4 w-4" />
@@ -34,37 +42,55 @@ const CylinderLabelPrint = ({
         <DialogHeader>
           <DialogTitle>Etiqueta del Cilindro</DialogTitle>
         </DialogHeader>
-        
+
         <div className="print:block">
-          {/* Label with exact dimensions: 10cm x 5cm (378px x 189px at 96 DPI) */}
-          <div className="border-2 border-black bg-white text-black print:border-black mx-[3px] py-0 px-0 my-0 shadow-industrial" style={{
-          width: '10cm',
-          height: '5cm',
-          fontSize: '12px',
-          lineHeight: '1.2',
-          padding: '4mm'
-        }}>
-            {/* Content arranged in compact layout */}
-            <div className="h-full flex flex-col justify-center mx-[52px] my-0 py-[4px] px-0">
-              {/* Serial Number - Main focus */}
-              <div className="text-center mb-1">
+          <div
+            className="border-2 border-black bg-white text-black print:border-black mx-auto shadow-industrial overflow-hidden"
+            style={{
+              width: "10cm",
+              height: "5cm",
+              fontSize: "12px",
+              lineHeight: "1.2",
+              padding: "3mm 4mm",
+            }}
+          >
+            <div className="h-full flex flex-row items-center gap-2">
+              {/* Left: Logo */}
+              <div className="flex-shrink-0 flex items-center justify-center" style={{ width: "2.2cm" }}>
+                <img
+                  src={logoTransvictoria}
+                  alt="Inversiones TransVictoria"
+                  style={{ width: "2cm", height: "auto" }}
+                />
+              </div>
+
+              {/* Center: Info */}
+              <div className="flex-1 flex flex-col items-center justify-center text-center gap-0.5">
+                <div className="text-xs font-semibold tracking-wide" style={{ fontSize: "9px" }}>
+                  INVERSIONES TRANSVICTORIA
+                </div>
+                <div className="text-xl font-black tracking-wider">
+                  CO2
+                </div>
                 <div className="text-lg font-bold font-mono tracking-wider">
                   {cylinder.serial_number}
                 </div>
-              </div>
-              
-              {/* CO2 Label */}
-              <div className="text-center mb-1">
-                <div className="text-xl font-bold">
-                  CO2
-                </div>
-              </div>
-              
-              {/* Capacity */}
-              <div className="text-center">
-                <div className="text-lg font-semibold">
+                <div className="text-base font-semibold">
                   {cylinder.capacity}
                 </div>
+              </div>
+
+              {/* Right: Barcode */}
+              <div className="flex-shrink-0 flex items-center justify-center" style={{ width: "3cm" }}>
+                <Barcode
+                  value={barcodeValue}
+                  width={1}
+                  height={50}
+                  fontSize={8}
+                  margin={0}
+                  displayValue={false}
+                  format="CODE128"
+                />
               </div>
             </div>
           </div>
@@ -79,10 +105,9 @@ const CylinderLabelPrint = ({
             Imprimir
           </Button>
         </div>
-        
-        {/* Print-specific styles */}
+
         <style dangerouslySetInnerHTML={{
-        __html: `
+          __html: `
             @media print {
               @page {
                 size: 10cm 5cm;
@@ -94,8 +119,10 @@ const CylinderLabelPrint = ({
               }
             }
           `
-      }} />
+        }} />
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
+
 export default CylinderLabelPrint;

@@ -17,6 +17,7 @@ import ReversalDialog from "@/components/ReversalDialog";
 interface Client {
   id: string;
   name: string;
+  zone: string | null;
 }
 interface Cylinder {
   id: string;
@@ -130,9 +131,9 @@ const Transfers = () => {
 
   const fetchClients = async () => {
     try {
-      const { data, error } = await (supabase as any).from('clients').select('id, name').eq('is_active', true).order('name');
+      const { data, error } = await supabase.from('clients').select('id, name, zone').eq('is_active', true).order('name');
       if (error) throw error;
-      setClients(data || []);
+      setClients((data as any[]) || []);
     } catch (error) {
       console.error('Error fetching clients:', error);
     }
@@ -804,7 +805,7 @@ const Transfers = () => {
                             <ScrollArea className="h-60">
                               {filteredClients.map(client => (
                                 <SelectItem key={client.id} value={client.name}>
-                                  {client.name}
+                                  {client.name}{client.zone ? ` (${client.zone})` : ''}
                                 </SelectItem>
                               ))}
                               {filteredClients.length === 0 && (

@@ -57,6 +57,7 @@ export type Database = {
           is_active: boolean
           name: string
           updated_at: string
+          zone: string | null
         }
         Insert: {
           created_at?: string
@@ -64,6 +65,7 @@ export type Database = {
           is_active?: boolean
           name: string
           updated_at?: string
+          zone?: string | null
         }
         Update: {
           created_at?: string
@@ -71,6 +73,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           updated_at?: string
+          zone?: string | null
         }
         Relationships: []
       }

@@ -12,6 +12,7 @@ import Reports from "./pages/Reports";
 import TankInventory from "./pages/TankInventory";
 import Adjustments from "./pages/Adjustments";
 import Backup from "./pages/Backup";
+import Clients from "./pages/Clients";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -85,6 +86,11 @@ const AppRoutes = () => (
     <Route path="/backup" element={
       <ProtectedRoute>
         <Backup />
+      </ProtectedRoute>
+    } />
+    <Route path="/clients" element={
+      <ProtectedRoute>
+        <Clients />
       </ProtectedRoute>
     } />
     <Route path="/auth" element={

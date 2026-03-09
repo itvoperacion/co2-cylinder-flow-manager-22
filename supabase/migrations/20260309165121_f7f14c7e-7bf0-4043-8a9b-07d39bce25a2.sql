@@ -1,0 +1,22 @@
+-- 25kg cylinders
+INSERT INTO cylinders (serial_number, capacity, valve_type, manufacturing_date, last_hydrostatic_test, next_test_due, current_status, current_location, customer_owned) VALUES
+('2020','25kg','industrial','2025-08-31','2025-08-31','2030-08-31','vacio','estacion_llenado',false),
+('2019','25kg','industrial','2025-08-31','2025-08-31','2030-08-31','vacio','estacion_llenado',false),
+('2018','25kg','industrial','2025-07-31','2025-07-31','2030-07-31','vacio','estacion_llenado',false),
+('2017','25kg','industrial','2021-07-31','2025-07-31','2030-07-31','vacio','estacion_llenado',false),
+('2016','25kg','industrial','2021-07-31','2025-07-31','2030-07-31','vacio','estacion_llenado',false),
+('2015','25kg','industrial','2021-07-31','2025-07-31','2030-07-31','vacio','estacion_llenado',false),
+('2014','25kg','industrial','2021-07-31','2025-07-31','2030-07-31','vacio','estacion_llenado',false),
+('2013','25kg','industrial','2021-07-28','2025-07-28','2030-07-28','vacio','estacion_llenado',false),
+('2012','25kg','industrial','2021-07-28','2025-07-28','2030-07-28','vacio','estacion_llenado',false),
+('2011','25kg','industrial','2021-07-28','2025-07-28','2030-07-28','vacio','estacion_llenado',false),
+('2010','25kg','industrial','2021-07-28','2025-07-28','2030-07-28','vacio','estacion_llenado',false),
+('2009','25kg','industrial','2021-07-28','2025-07-28','2030-07-28','vacio','estacion_llenado',false),
+('2008','25kg','industrial','2021-07-28','2025-07-28','2030-07-28','vacio','estacion_llenado',false),
+('2007','25kg','industrial','2021-07-31','2025-07-31','2030-07-31','vacio','en_mantenimiento',false),
+('2006','25kg','industrial','2021-07-31','2025-01-07','2030-01-07','vacio','en_mantenimiento',false),
+('2005','25kg','industrial','2021-07-28','2025-07-28','2030-07-28','vacio','estacion_llenado',false),
+('2004','25kg','industrial','2021-07-28','2025-07-28','2030-07-28','vacio','estacion_llenado',false),
+('2003','25kg','industrial','2021-07-28','2025-07-28','2030-07-28','vacio','en_mantenimiento',false),
+('2002','25kg','industrial','2021-07-28','2025-07-28','2030-07-28','vacio','en_mantenimiento',false),
+('2001','25kg','industrial','2021-07-28','2025-07-28','2030-07-28','vacio','en_mantenimiento',false);

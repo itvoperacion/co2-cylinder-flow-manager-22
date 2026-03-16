@@ -363,7 +363,7 @@ const Reports = () => {
       transformedData = transformedData.map((item: any) => ({
         'Nro. Orden de Entrega': item.delivery_order_number || 'N/A',
         'Nro. Nota de Envío': item.nota_envio_number || 'N/A',
-        'Nombre del Cliente': item.customer_info || 'N/A',
+        'Nombre del Cliente': item.client_name || item.customer_info || 'N/A',
         'Fecha de Traslado': item.created_at,
         'Nro. de Serie': item.serial_number_cilindro,
         'Capacidad': item.capacidad_cilindro,

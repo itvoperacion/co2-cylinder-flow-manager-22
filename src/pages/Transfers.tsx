@@ -454,7 +454,8 @@ const Transfers = () => {
         zone: formData.zone || null,
         delivery_order_number: resolvedDeliveryOrder,
         nota_envio_number: resolvedNotaEnvio,
-        trip_closure: formData.trip_closure
+        trip_closure: formData.trip_closure,
+        client_name: formData.customer_name || null
       }));
       const {
         error: transferError

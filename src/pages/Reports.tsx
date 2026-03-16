@@ -429,7 +429,7 @@ const Reports = () => {
     // Group by customer
     const customerCount = new Map<string, number>();
     data.forEach((item: any) => {
-      const customer = item.cylinders?.customer_info || item.observations || 'Sin nombre';
+      const customer = item.client_name || item.cylinders?.customer_info || 'Sin nombre';
       customerCount.set(customer, (customerCount.get(customer) || 0) + 1);
     });
 

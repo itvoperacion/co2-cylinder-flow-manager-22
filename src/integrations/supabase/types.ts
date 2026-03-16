@@ -497,6 +497,7 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          client_name: string | null
           created_at: string
           crew_name: string | null
           cylinder_id: string
@@ -521,6 +522,7 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          client_name?: string | null
           created_at?: string
           crew_name?: string | null
           cylinder_id: string
@@ -545,6 +547,7 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          client_name?: string | null
           created_at?: string
           crew_name?: string | null
           cylinder_id?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.transfers ADD COLUMN client_name text;

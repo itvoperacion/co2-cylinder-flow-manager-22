@@ -223,27 +223,30 @@ const Transfers = () => {
   };
   const fetchAvailableTransfers = async () => {
     try {
+      const isCierreRutas = formData.from_location === 'rutas' && formData.to_location === 'cierre_rutas';
+
       let query = supabase.from('transfers').select(`
           *,
-          cylinders (
+          cylinders!inner (
             id,
             serial_number,
             capacity,
             current_status,
             current_location
           )
-        `).eq('is_reversed', false).eq('trip_closure', false);
+        `).eq('is_reversed', false);
 
       // Filtrar según el tipo de traslado
       if (formData.from_location === 'rutas' && formData.to_location === 'clientes') {
         // Buscar notas de envío activas (despacho -> rutas)
-        query = query.eq('to_location', 'rutas');
+        query = query.eq('to_location', 'rutas').eq('trip_closure', false);
       } else if (formData.from_location === 'clientes' && formData.to_location === 'devolucion_clientes') {
         // Buscar órdenes de entrega activas (rutas -> clientes)
-        query = query.eq('to_location', 'clientes');
-      } else if (formData.from_location === 'rutas' && formData.to_location === 'cierre_rutas') {
-        // Buscar notas de envío para cierre
-        query = query.eq('to_location', 'rutas');
+        query = query.eq('to_location', 'clientes').eq('trip_closure', false);
+      } else if (isCierreRutas) {
+        // Buscar notas de envío con cilindros aún en rutas (sin filtrar trip_closure,
+        // ya que la nota pudo cerrarse al despachar a clientes pero quedaron cilindros en rutas)
+        query = query.eq('to_location', 'rutas').eq('cylinders.current_location', 'rutas');
       }
       const {
         data,
@@ -268,6 +271,7 @@ const Transfers = () => {
       setAvailableTransfers([]);
     }
   };
+
   const fetchCylindersFromSelectedTransfer = async (transferIdentifier: string) => {
     try {
       let query = supabase.from('transfers').select(`

@@ -225,38 +225,65 @@ const Transfers = () => {
     try {
       const isCierreRutas = formData.from_location === 'rutas' && formData.to_location === 'cierre_rutas';
 
+      // Caso especial: Rutas -> Cierre de Rutas
+      // Solo mostrar notas de envío cuyos cilindros aún estén físicamente en "rutas"
+      if (isCierreRutas) {
+        const { data: cylindersInRutas, error: cylErr } = await supabase
+          .from('cylinders')
+          .select('id')
+          .eq('current_location', 'rutas')
+          .eq('is_active', true);
+        if (cylErr) throw cylErr;
+
+        const cylinderIds = (cylindersInRutas || []).map(c => c.id);
+        if (cylinderIds.length === 0) {
+          setAvailableTransfers([]);
+          return;
+        }
+
+        const { data: transfersData, error: trErr } = await supabase
+          .from('transfers')
+          .select(`*, cylinders (id, serial_number, capacity, current_status, current_location)`)
+          .eq('to_location', 'rutas')
+          .eq('is_reversed', false)
+          .in('cylinder_id', cylinderIds)
+          .order('created_at', { ascending: false });
+        if (trErr) throw trErr;
+
+        // Por cilindro, tomar su traslado más reciente a rutas
+        const latestByCylinder = new Map<string, any>();
+        (transfersData || []).forEach(t => {
+          if (!latestByCylinder.has(t.cylinder_id)) latestByCylinder.set(t.cylinder_id, t);
+        });
+        // Deduplicar por nota_envio_number
+        const uniqueByNota = new Map<string, any>();
+        latestByCylinder.forEach(t => {
+          const key = t.nota_envio_number;
+          if (key && !uniqueByNota.has(key)) uniqueByNota.set(key, t);
+        });
+        setAvailableTransfers(Array.from(uniqueByNota.values()) as Transfer[]);
+        return;
+      }
+
       let query = supabase.from('transfers').select(`
           *,
-          cylinders!inner (
+          cylinders (
             id,
             serial_number,
             capacity,
             current_status,
             current_location
           )
-        `).eq('is_reversed', false);
+        `).eq('is_reversed', false).eq('trip_closure', false);
 
-      // Filtrar según el tipo de traslado
       if (formData.from_location === 'rutas' && formData.to_location === 'clientes') {
-        // Buscar notas de envío activas (despacho -> rutas)
-        query = query.eq('to_location', 'rutas').eq('trip_closure', false);
+        query = query.eq('to_location', 'rutas');
       } else if (formData.from_location === 'clientes' && formData.to_location === 'devolucion_clientes') {
-        // Buscar órdenes de entrega activas (rutas -> clientes)
-        query = query.eq('to_location', 'clientes').eq('trip_closure', false);
-      } else if (isCierreRutas) {
-        // Buscar notas de envío con cilindros aún en rutas (sin filtrar trip_closure,
-        // ya que la nota pudo cerrarse al despachar a clientes pero quedaron cilindros en rutas)
-        query = query.eq('to_location', 'rutas').eq('cylinders.current_location', 'rutas');
+        query = query.eq('to_location', 'clientes');
       }
-      const {
-        data,
-        error
-      } = await query.order('created_at', {
-        ascending: false
-      });
+      const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
 
-      // Agrupar por nota_envio_number o delivery_order_number
       const uniqueTransfers = data?.reduce((acc, transfer) => {
         const key = transfer.nota_envio_number || transfer.delivery_order_number || transfer.transfer_number;
         const existing = acc.find(t => t.nota_envio_number === transfer.nota_envio_number && transfer.nota_envio_number || t.delivery_order_number === transfer.delivery_order_number && transfer.delivery_order_number || t.transfer_number === transfer.transfer_number && transfer.transfer_number);
